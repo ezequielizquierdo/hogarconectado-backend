@@ -25,6 +25,9 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Middleware para servir archivos estáticos (imágenes)
+app.use('/uploads', express.static('uploads'));
+
 // Conexión a MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/hogarconectado')
   .then(() => console.log('✅ Conectado a MongoDB'))
@@ -43,11 +46,13 @@ app.get('/', (req, res) => {
 const categoriasRoutes = require('./routes/categorias');
 const productosRoutes = require('./routes/productos');
 const cotizacionesRoutes = require('./routes/cotizaciones');
+const uploadRoutes = require('./routes/upload');
 
 // Usar rutas
 app.use('/api/categorias', categoriasRoutes);
 app.use('/api/productos', productosRoutes);
 app.use('/api/cotizaciones', cotizacionesRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Middleware de manejo de errores
 app.use((err, req, res, next) => {

@@ -82,6 +82,16 @@ npm test           # Ejecutar tests (próximamente)
 | `DELETE` | `/api/cotizaciones/:id`                  | Eliminar cotización       |
 | `GET`    | `/api/cotizaciones/estadisticas/resumen` | Estadísticas básicas      |
 
+### 📸 Upload de Imágenes
+
+| Método   | Endpoint                               | Descripción              |
+|----------|----------------------------------------|--------------------------|
+| `POST`   | `/api/upload/single`                   | Subir una imagen         |
+| `POST`   | `/api/upload/multiple`                 | Subir múltiples imágenes |
+| `POST`   | `/api/upload/base64`                   | Subir imagen desde Base64|
+| `DELETE` | `/api/upload/:filename`                | Eliminar imagen local    |
+| `DELETE` | `/api/upload/cloudinary/:publicId`     | Eliminar de Cloudinary   |
+
 ## 📝 Ejemplos de Uso
 
 ### Crear una cotización
