@@ -10,8 +10,12 @@ const app = express();
 // Middlewares de seguridad
 app.use(helmet());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? 'tu-dominio.com' : '*',
-  credentials: true
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://tu-frontend-domain.com', 'https://tu-app-domain.vercel.app'] 
+    : '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Rate limiting
@@ -35,10 +39,18 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/hogarcone
 
 // Rutas principales
 app.get('/', (req, res) => {
+  const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
   res.json({ 
     message: '🏠 Hogar Conectado API', 
     version: '1.0.0',
-    status: 'running' 
+    status: 'running',
+    baseUrl: baseUrl,
+    endpoints: {
+      productos: `${baseUrl}/api/productos`,
+      categorias: `${baseUrl}/api/categorias`, 
+      cotizaciones: `${baseUrl}/api/cotizaciones`,
+      upload: `${baseUrl}/api/upload`
+    }
   });
 });
 

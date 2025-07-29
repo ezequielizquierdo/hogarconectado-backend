@@ -98,11 +98,13 @@ router.post('/single', upload.single('imagen'), async (req, res) => {
       } catch (cloudinaryError) {
         console.error('Error subiendo a Cloudinary:', cloudinaryError);
         // Si falla Cloudinary, usar almacenamiento local
-        imageUrl = `/uploads/images/${req.file.filename}`;
+        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+        imageUrl = `${baseUrl}/uploads/images/${req.file.filename}`;
       }
     } else {
       // Usar almacenamiento local
-      imageUrl = `/uploads/images/${req.file.filename}`;
+      const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+      imageUrl = `${baseUrl}/uploads/images/${req.file.filename}`;
     }
 
     res.status(201).json({
@@ -168,10 +170,12 @@ router.post('/multiple', upload.array('imagenes', 10), async (req, res) => {
             
           } catch (cloudinaryError) {
             console.error('Error subiendo a Cloudinary:', cloudinaryError);
-            imageUrl = `/uploads/images/${file.filename}`;
+            const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+            imageUrl = `${baseUrl}/uploads/images/${file.filename}`;
           }
         } else {
-          imageUrl = `/uploads/images/${file.filename}`;
+          const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+          imageUrl = `${baseUrl}/uploads/images/${file.filename}`;
         }
 
         uploadResults.push({
@@ -348,13 +352,15 @@ router.post('/base64', async (req, res) => {
         // Si falla Cloudinary, usar almacenamiento local
         const localFilePath = path.join(imagesDir, uniqueFilename);
         fs.writeFileSync(localFilePath, base64Data, 'base64');
-        imageUrl = `/uploads/images/${uniqueFilename}`;
+        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+        imageUrl = `${baseUrl}/uploads/images/${uniqueFilename}`;
       }
     } else {
       // Usar almacenamiento local
       const localFilePath = path.join(imagesDir, uniqueFilename);
       fs.writeFileSync(localFilePath, base64Data, 'base64');
-      imageUrl = `/uploads/images/${uniqueFilename}`;
+      const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+      imageUrl = `${baseUrl}/uploads/images/${uniqueFilename}`;
     }
 
     res.status(201).json({
