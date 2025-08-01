@@ -11,9 +11,15 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
-# Logs
+# Logs y archivos temporales
 logs
 *.log
+server.log
+debug.log
+
+# Archivos temporales de scripts
+temp/
+tmp/
 
 # Runtime data
 pids

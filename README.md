@@ -41,10 +41,53 @@ npm run dev
 ## 🛠 Scripts Disponibles
 
 ```bash
-npm start          # Iniciar servidor de producción
-npm run dev        # Iniciar servidor de desarrollo con nodemon
-npm run seed       # Poblar base de datos con datos iniciales
-npm test           # Ejecutar tests (próximamente)
+# Producción y desarrollo
+npm start                # Iniciar servidor de producción
+npm run dev             # Iniciar servidor de desarrollo con nodemon
+
+# Gestión de datos
+npm run seed            # Poblar base de datos con datos iniciales
+npm run import-excel    # Importar productos desde Excel
+npm run analyze-excel   # Analizar estructura del archivo Excel
+
+# Utilidades
+npm run verify-db       # Verificar estado de la base de datos
+npm run manage-categories # Gestionar categorías
+
+# Testing
+npm test               # Ejecutar tests (próximamente)
+```
+
+## 📁 Estructura del Proyecto
+
+```
+hogarconectado-backend/
+├── 📁 models/          # Modelos de Mongoose
+│   ├── Categoria.js
+│   ├── Producto.js
+│   └── Cotizacion.js
+├── 📁 routes/          # Rutas de la API
+│   ├── categorias.js
+│   ├── productos.js
+│   ├── cotizaciones.js
+│   └── upload.js
+├── 📁 scripts/        # Scripts de utilidad y mantenimiento
+│   ├── gestionar-categorias.js
+│   ├── verificar-bd.js
+│   └── README.md
+├── 📁 data/           # Datos y scripts de importación
+│   ├── stock.xlsx
+│   ├── importar-excel.js
+│   └── README.md
+├── 📁 docs/           # Documentación
+│   ├── FRONTEND-INTEGRATION.md
+│   ├── GUIA-IMAGENES-CORS.md
+│   └── CATEGORIA-LAVAVAJILLAS.md
+├── 📁 uploads/        # Archivos subidos
+│   └── images/
+├── server.js          # Servidor principal
+├── seed.js           # Datos iniciales
+└── package.json      # Configuración del proyecto
 ```
 
 ## 🌐 Endpoints de la API
