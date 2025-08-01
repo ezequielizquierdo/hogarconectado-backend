@@ -21,7 +21,13 @@ router.get('/', async (req, res) => {
     
     if (categoria) filtros.categoria = categoria;
     if (marca) filtros.marca = new RegExp(marca, 'i');
-    if (disponible === 'true') filtros['stock.disponible'] = true;
+    // Temporalmente removido el filtro de stock para debugging
+    // if (disponible === 'true') {
+    //   filtros.$or = [
+    //     { 'stock.disponible': true },
+    //     { 'stock.disponible': { $exists: false } } // Para productos sin stock definido
+    //   ];
+    // }
 
     // Configurar paginación
     const skip = (parseInt(pagina) - 1) * parseInt(limite);

@@ -5,6 +5,21 @@ const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
+// Middleware CORS específico para uploads
+router.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, multipart/form-data');
+  res.header('Access-Control-Expose-Headers', 'Content-Length, Content-Type');
+  
+  // Manejar preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
+
 // Verificar si hay configuración de Cloudinary
 let cloudinary = null;
 try {
@@ -381,6 +396,67 @@ router.post('/base64', async (req, res) => {
       error: error.message
     });
   }
+});
+
+// GET /api/upload/image/:filename - Servir imagen con headers CORS correctos
+router.get('/image/:filename', (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const imagePath = path.join(imagesDir, filename);
+    
+    // Verificar si el archivo existe
+    if (!fs.existsSync(imagePath)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Imagen no encontrada'
+      });
+    }
+    
+    // Configurar headers para imágenes
+    const ext = path.extname(filename).toLowerCase();
+    const contentTypes = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+      '.svg': 'image/svg+xml'
+    };
+    
+    res.setHeader('Content-Type', contentTypes[ext] || 'application/octet-stream');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache por 1 año
+    
+    // Enviar archivo
+    res.sendFile(imagePath);
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error al servir imagen',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/upload/status - Verificar estado del servicio de upload
+router.get('/status', (req, res) => {
+  const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+  
+  res.json({
+    success: true,
+    message: 'Servicio de upload funcionando',
+    config: {
+      cloudinary: !!cloudinary,
+      maxFileSize: '5MB',
+      allowedTypes: ['JPEG', 'PNG', 'WebP', 'GIF'],
+      maxFiles: 10,
+      localStoragePath: '/uploads/images/',
+      imageEndpoint: `${baseUrl}/api/upload/image/`,
+      staticEndpoint: `${baseUrl}/uploads/images/`
+    }
+  });
 });
 
 module.exports = router;
