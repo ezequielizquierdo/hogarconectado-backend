@@ -47,7 +47,9 @@ const productoSchema = new mongoose.Schema({
   },
   tags: [String] // Para búsquedas
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
 // Índices para optimizar búsquedas
@@ -63,6 +65,11 @@ productoSchema.index({
   modelo: 'text',
   descripcion: 'text',
   tags: 'text'
+});
+
+// Virtual para nombre completo (marca + modelo)
+productoSchema.virtual('nombre').get(function() {
+  return `${this.marca} ${this.modelo}`;
 });
 
 // Método virtual para obtener precio con ganancia
