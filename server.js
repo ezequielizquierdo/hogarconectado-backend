@@ -17,6 +17,7 @@ const corsOptions = {
     }
     // En producción, permitir apps móviles y dominios específicos
     const allowedOrigins = [
+      'https://hogarconectado-backend.onrender.com',
       'https://hogarconectado-frontend.vercel.app',
       'https://hogarconectado.netlify.app',
       'http://localhost:3000',
