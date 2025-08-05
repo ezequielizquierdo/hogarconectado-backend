@@ -70,12 +70,12 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Configuración de multer
+// Configuración de multer (OPTIMIZADA)
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB máximo
-    files: 10 // Máximo 10 archivos por request
+    fileSize: 10 * 1024 * 1024, // 10MB máximo (aumentado)
+    files: 5 // Reducido para mayor velocidad
   },
   fileFilter: fileFilter
 });
@@ -93,34 +93,9 @@ router.post('/single', upload.single('imagen'), async (req, res) => {
     let imageUrl;
     let publicId = null;
 
-    // Si Cloudinary está configurado, subir allí
-    if (cloudinary) {
-      try {
-        const result = await cloudinary.uploader.upload(req.file.path, {
-          folder: 'hogar-conectado/productos',
-          transformation: [
-            { width: 800, height: 600, crop: 'limit', quality: 'auto' },
-            { format: 'webp' }
-          ]
-        });
-        
-        imageUrl = result.secure_url;
-        publicId = result.public_id;
-        
-        // Eliminar archivo local después de subir a Cloudinary
-        fs.unlinkSync(req.file.path);
-        
-      } catch (cloudinaryError) {
-        console.error('Error subiendo a Cloudinary:', cloudinaryError);
-        // Si falla Cloudinary, usar almacenamiento local
-        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-        imageUrl = `${baseUrl}/uploads/images/${req.file.filename}`;
-      }
-    } else {
-      // Usar almacenamiento local
-      const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-      imageUrl = `${baseUrl}/uploads/images/${req.file.filename}`;
-    }
+    // OPTIMIZADO: Usar almacenamiento local directo (sin Cloudinary para mayor velocidad)
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+    imageUrl = `${baseUrl}/uploads/images/${req.file.filename}`;
 
     res.status(201).json({
       success: true,
@@ -163,39 +138,13 @@ router.post('/multiple', upload.array('imagenes', 10), async (req, res) => {
 
     for (const file of req.files) {
       try {
-        let imageUrl;
-        let publicId = null;
-
-        // Si Cloudinary está configurado, subir allí
-        if (cloudinary) {
-          try {
-            const result = await cloudinary.uploader.upload(file.path, {
-              folder: 'hogar-conectado/productos',
-              transformation: [
-                { width: 800, height: 600, crop: 'limit', quality: 'auto' },
-                { format: 'webp' }
-              ]
-            });
-            
-            imageUrl = result.secure_url;
-            publicId = result.public_id;
-            
-            // Eliminar archivo local después de subir a Cloudinary
-            fs.unlinkSync(file.path);
-            
-          } catch (cloudinaryError) {
-            console.error('Error subiendo a Cloudinary:', cloudinaryError);
-            const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-            imageUrl = `${baseUrl}/uploads/images/${file.filename}`;
-          }
-        } else {
-          const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-          imageUrl = `${baseUrl}/uploads/images/${file.filename}`;
-        }
+        // OPTIMIZADO: Usar almacenamiento local directo
+        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+        const imageUrl = `${baseUrl}/uploads/images/${file.filename}`;
 
         uploadResults.push({
           url: imageUrl,
-          publicId: publicId,
+          publicId: null,
           originalName: file.originalname,
           size: file.size,
           mimetype: file.mimetype
