@@ -8,22 +8,25 @@ require('dotenv').config();
 
 const app = express();
 
-// Configuración CORS más permisiva para desarrollo
+// Configuración CORS más permisiva para desarrollo y apps móviles
 const corsOptions = {
   origin: function (origin, callback) {
     // En desarrollo, permitir todos los orígenes
     if (process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
-    // En producción, especificar dominios permitidos
+    // En producción, permitir apps móviles y dominios específicos
     const allowedOrigins = [
-      'https://tu-frontend-domain.com',
-      'https://tu-app-domain.vercel.app',
+      'https://hogarconectado-frontend.vercel.app',
+      'https://hogarconectado.netlify.app',
       'http://localhost:3000',
       'http://localhost:3001',
       'http://localhost:8081', // React Native Metro
       'http://10.0.2.2:3000',  // Android Emulator
-      'http://127.0.0.1:3000'
+      'http://127.0.0.1:3000',
+      // Apps móviles no tienen origin, permitirlas
+      null,
+      undefined
     ];
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);

@@ -11,7 +11,12 @@
     "analyze-excel": "node data/analizar-excel.js",
     "verify-db": "node scripts/verificar-bd.js",
     "manage-categories": "node scripts/gestionar-categorias.js",
+    "build": "echo 'Build completed successfully'",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
   "keywords": [
     "hogar",
