@@ -1,13 +1,5 @@
-[variables]
-NPM_CONFIG_AUDIT = false
-NPM_CONFIG_FUND = false
-NODE_ENV = production
-
 [phases.install]
-cmd = "npm install --omit=dev --no-package-lock"
-
-[phases.build]
-cmd = "echo 'Build phase completed'"
+cmd = "npm install --omit=dev"
 
 [start]
 cmd = "npm start"
