@@ -4,23 +4,29 @@ const { body, validationResult } = require('express-validator');
 const Producto = require('../models/Producto');
 const Categoria = require('../models/Categoria');
 
-// GET /api/productos - Obtener todos los productos con filtros
+// GET /api/productos - Obtener todos los productos con filtros y paginación
 router.get('/', async (req, res) => {
   try {
     const {
       categoria,
       marca,
       disponible = 'true',
-      limite = 50,
+      limite = 20, // Límite más conservador para mejor rendimiento
       pagina = 1,
-      buscar
+      buscar,
+      ordenar = 'recientes' // nuevo parámetro de ordenamiento
     } = req.query;
+
+    // Validar parámetros de paginación
+    const limiteParsed = Math.max(1, Math.min(parseInt(limite) || 20, 100)); // Max 100 por página
+    const paginaParsed = Math.max(1, parseInt(pagina) || 1);
 
     // Construir filtros
     const filtros = { activo: true };
     
     if (categoria) filtros.categoria = categoria;
     if (marca) filtros.marca = new RegExp(marca, 'i');
+    
     // Temporalmente removido el filtro de stock para debugging
     // if (disponible === 'true') {
     //   filtros.$or = [
@@ -30,37 +36,80 @@ router.get('/', async (req, res) => {
     // }
 
     // Configurar paginación
-    const skip = (parseInt(pagina) - 1) * parseInt(limite);
+    const skip = (paginaParsed - 1) * limiteParsed;
+
+    // Configurar ordenamiento
+    let sortOptions = { createdAt: -1 }; // Por defecto: más recientes
+    switch (ordenar) {
+      case 'alfabetico':
+        sortOptions = { marca: 1, modelo: 1 };
+        break;
+      case 'precio-asc':
+        sortOptions = { precioBase: 1 };
+        break;
+      case 'precio-desc':
+        sortOptions = { precioBase: -1 };
+        break;
+      case 'categoria':
+        sortOptions = { 'categoria.nombre': 1, marca: 1 };
+        break;
+      case 'recientes':
+      default:
+        sortOptions = { createdAt: -1 };
+        break;
+    }
 
     let query = Producto.find(filtros)
       .populate('categoria', 'nombre icono')
-      .sort({ createdAt: -1 })
+      .sort(sortOptions)
       .skip(skip)
-      .limit(parseInt(limite));
+      .limit(limiteParsed);
 
     // Búsqueda por texto si se proporciona
     if (buscar) {
-      query = Producto.find({
+      const filtrosBusqueda = {
         ...filtros,
         $text: { $search: buscar }
-      }, { score: { $meta: 'textScore' } })
+      };
+      
+      query = Producto.find(filtrosBusqueda, { score: { $meta: 'textScore' } })
         .populate('categoria', 'nombre icono')
         .sort({ score: { $meta: 'textScore' } })
         .skip(skip)
-        .limit(parseInt(limite));
+        .limit(limiteParsed);
     }
 
     const productos = await query;
-    const total = await Producto.countDocuments(filtros);
+    
+    // Contar total para la paginación (usar los mismos filtros)
+    const filtrosCount = buscar ? { ...filtros, $text: { $search: buscar } } : filtros;
+    const total = await Producto.countDocuments(filtrosCount);
+    
+    const totalPaginas = Math.ceil(total / limiteParsed);
+    const tienePaginaAnterior = paginaParsed > 1;
+    const tienePaginaSiguiente = paginaParsed < totalPaginas;
 
     res.json({
       success: true,
       data: productos,
       pagination: {
-        pagina: parseInt(pagina),
-        limite: parseInt(limite),
+        pagina: paginaParsed,
+        limite: limiteParsed,
         total,
-        paginas: Math.ceil(total / parseInt(limite))
+        totalPaginas,
+        tienePaginaAnterior,
+        tienePaginaSiguiente,
+        paginaAnterior: tienePaginaAnterior ? paginaParsed - 1 : null,
+        paginaSiguiente: tienePaginaSiguiente ? paginaParsed + 1 : null,
+        desde: skip + 1,
+        hasta: Math.min(skip + limiteParsed, total)
+      },
+      filtros: {
+        categoria,
+        marca,
+        disponible,
+        buscar,
+        ordenar
       }
     });
   } catch (error) {
