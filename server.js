@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 const path = require('path');
 require('dotenv').config();
 
@@ -58,6 +59,19 @@ app.use(helmet({
 
 app.use(cors(corsOptions));
 
+// Compression middleware para reducir el tamaño de las respuestas
+app.use(compression({
+  level: 6, // Nivel de compresión (1-9, 6 es buen balance)
+  threshold: 1024, // Solo comprimir archivos > 1KB
+  filter: (req, res) => {
+    // Comprimir todo excepto imágenes ya comprimidas
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  }
+}));
+
 // Middleware para manejar preflight requests
 app.options('*', cors(corsOptions));
 
@@ -72,27 +86,21 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Servir archivos estáticos (imágenes) con headers CORS apropiados
-app.use('/uploads', (req, res, next) => {
-  // Headers CORS específicos para imágenes
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
-  
-  // Configurar cache para imágenes
-  res.header('Cache-Control', 'public, max-age=31536000'); // 1 año
-  
-  next();
-}, express.static(path.join(__dirname, 'uploads')));
-
-// Middleware adicional para archivos de imágenes
-app.use('/uploads', (req, res, next) => {
-  const ext = path.extname(req.path).toLowerCase();
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
-  
-  if (imageExtensions.includes(ext)) {
-    // Configurar Content-Type apropiado
+// Servir archivos estáticos (imágenes) OPTIMIZADO
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  // Configuración optimizada para imágenes
+  maxAge: '1y', // Cache por 1 año
+  etag: true,   // ETag para validación de cache
+  lastModified: true,
+  setHeaders: (res, path, stat) => {
+    // Headers CORS específicos para imágenes
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+    
+    // Configurar Content-Type apropiado basado en extensión
+    const ext = require('path').extname(path).toLowerCase();
     const contentTypes = {
       '.jpg': 'image/jpeg',
       '.jpeg': 'image/jpeg', 
@@ -102,14 +110,16 @@ app.use('/uploads', (req, res, next) => {
       '.svg': 'image/svg+xml'
     };
     
-    res.type(contentTypes[ext] || 'application/octet-stream');
+    if (contentTypes[ext]) {
+      res.type(contentTypes[ext]);
+    }
+    
+    // Permitir compresión para imágenes que lo soporten
+    if (['.svg'].includes(ext)) {
+      res.header('Content-Encoding', 'gzip');
+    }
   }
-  
-  next();
-});
-
-// Middleware para servir archivos estáticos (imágenes)
-app.use('/uploads', express.static('uploads'));
+}));
 
 // Conexión a MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/hogarconectado')
