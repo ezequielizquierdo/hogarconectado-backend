@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: hogarconectado-backend
+    env: node
+    buildCommand: npm cache clean --force && npm install --verbose
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 20.11.0

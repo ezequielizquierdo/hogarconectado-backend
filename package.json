@@ -15,8 +15,9 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0",
+    "yarn": ">=1.22.0"
   },
   "keywords": [
     "hogar",
