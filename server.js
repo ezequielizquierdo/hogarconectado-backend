@@ -143,6 +143,23 @@ app.get('/', (req, res) => {
   });
 });
 
+// Health check súper rápido (sin consulta a DB)
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: Date.now(),
+    uptime: process.uptime() 
+  });
+});
+
+// Wake up endpoint para mantener el servidor activo
+app.get('/wake-up', (req, res) => {
+  res.json({ 
+    message: 'Server is awake!', 
+    timestamp: new Date().toISOString() 
+  });
+});
+
 // Importar rutas
 const categoriasRoutes = require('./routes/categorias');
 const productosRoutes = require('./routes/productos');

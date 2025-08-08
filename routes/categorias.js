@@ -3,19 +3,54 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const Categoria = require('../models/Categoria');
 
-// GET /api/categorias - Obtener todas las categorías
+// Cache simple en memoria para categorías
+let categoriasCache = null;
+let cacheTimestamp = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
+// GET /api/categorias - Obtener todas las categorías (CON CACHE)
 router.get('/', async (req, res) => {
   try {
+    const now = Date.now();
+    
+    // Verificar si tenemos cache válido
+    if (categoriasCache && (now - cacheTimestamp) < CACHE_DURATION) {
+      return res.json({
+        success: true,
+        data: categoriasCache,
+        count: categoriasCache.length,
+        cached: true
+      });
+    }
+
+    // Si no hay cache o está vencido, consultar DB
     const categorias = await Categoria.find({ activa: true })
       .sort({ nombre: 1 })
-      .select('nombre descripcion icono');
+      .select('nombre descripcion icono')
+      .lean(); // .lean() para mejor performance
     
+    // Actualizar cache
+    categoriasCache = categorias;
+    cacheTimestamp = now;
+
     res.json({
       success: true,
       data: categorias,
-      count: categorias.length
+      count: categorias.length,
+      cached: false
     });
   } catch (error) {
+    // Si hay error, intentar responder con cache aunque esté vencido
+    if (categoriasCache) {
+      return res.json({
+        success: true,
+        data: categoriasCache,
+        count: categoriasCache.length,
+        cached: true,
+        warning: 'Datos desde cache por error en DB'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Error al obtener categorías',
@@ -23,6 +58,12 @@ router.get('/', async (req, res) => {
     });
   }
 });
+
+// Función para limpiar cache
+function clearCache() {
+  categoriasCache = null;
+  cacheTimestamp = 0;
+}
 
 // GET /api/categorias/:id - Obtener una categoría por ID
 router.get('/:id', async (req, res) => {
@@ -94,6 +135,9 @@ router.post('/', [
 
     await nuevaCategoria.save();
 
+    // Limpiar cache después de crear
+    clearCache();
+
     res.status(201).json({
       success: true,
       message: 'Categoría creada exitosamente',
@@ -144,6 +188,9 @@ router.put('/:id', [
       });
     }
 
+    // Limpiar cache después de actualizar
+    clearCache();
+
     res.json({
       success: true,
       message: 'Categoría actualizada exitosamente',
@@ -173,6 +220,9 @@ router.delete('/:id', async (req, res) => {
         message: 'Categoría no encontrada'
       });
     }
+
+    // Limpiar cache después de eliminar
+    clearCache();
 
     res.json({
       success: true,
