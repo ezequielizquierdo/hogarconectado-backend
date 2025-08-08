@@ -7,6 +7,9 @@ const compression = require('compression');
 const path = require('path');
 require('dotenv').config();
 
+// Inicializar keep-alive para Render
+require('./utils/keep-alive');
+
 const app = express();
 
 // Configuración CORS más permisiva para desarrollo y apps móviles
