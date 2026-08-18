@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const Producto = require('../models/Producto');
+const { getPricingConfig } = require('../utils/pricing');
 const Categoria = require('../models/Categoria');
 
 // GET /api/productos - Obtener todos los productos con filtros y paginación
@@ -335,9 +336,7 @@ router.get('/:id/cotizar', async (req, res) => {
         },
         precios,
         factores: {
-          ganancia: process.env.GANANCIA_DEFAULT || 0.30,
-          factor3Cuotas: process.env.FACTOR_3_CUOTAS || 1.1298,
-          factor6Cuotas: process.env.FACTOR_6_CUOTAS || 1.2138
+          ...getPricingConfig(process.env)
         }
       }
     });

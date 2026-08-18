@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { calculatePrices, getPricingConfig } = require('../utils/pricing');
 
 const productoSchema = new mongoose.Schema({
   categoria: {
@@ -74,27 +75,12 @@ productoSchema.virtual('nombre').get(function() {
 
 // Método virtual para obtener precio con ganancia
 productoSchema.virtual('precioConGanancia').get(function() {
-  const ganancia = process.env.GANANCIA_DEFAULT || 0.30;
-  return this.precioBase * (1 + ganancia);
+  return calculatePrices(this.precioBase, getPricingConfig(process.env)).contado;
 });
 
 // Método para calcular precio en cuotas
 productoSchema.methods.calcularCuotas = function() {
-  const precioConGanancia = this.precioBase * (1 + (process.env.GANANCIA_DEFAULT || 0.30));
-  const factor3 = parseFloat(process.env.FACTOR_3_CUOTAS) || 1.1298;
-  const factor6 = parseFloat(process.env.FACTOR_6_CUOTAS) || 1.2138;
-  
-  return {
-    contado: precioConGanancia,
-    tresCuotas: {
-      total: precioConGanancia * factor3,
-      cuota: (precioConGanancia * factor3) / 3
-    },
-    seisCuotas: {
-      total: precioConGanancia * factor6,
-      cuota: (precioConGanancia * factor6) / 6
-    }
-  };
+  return calculatePrices(this.precioBase, getPricingConfig(process.env));
 };
 
 module.exports = mongoose.model('Producto', productoSchema);

@@ -12,7 +12,7 @@
     "verify-db": "node scripts/verificar-bd.js",
     "manage-categories": "node scripts/gestionar-categorias.js",
     "build": "echo 'Build completed successfully'",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test"
   },
   "engines": {
     "node": ">=16.0.0",
@@ -41,7 +41,6 @@
     "mongodb": "4.1",
     "mongoose": "^8.0.3",
     "multer": "^1.4.5-lts.1",
-    "node-cron": "^4.2.1",
     "uuid": "^11.1.0",
     "xlsx": "^0.18.5"
   },

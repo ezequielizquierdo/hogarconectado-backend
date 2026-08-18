@@ -7,10 +7,13 @@ const compression = require('compression');
 const path = require('path');
 require('dotenv').config();
 
-// Inicializar keep-alive para Render
-require('./utils/keep-alive');
-
 const app = express();
+
+// Render termina TLS en su proxy y envía la IP original en X-Forwarded-For.
+// Confiar en un único proxy permite que express-rate-limit identifique al cliente.
+if (process.env.NODE_ENV === 'production' || process.env.RENDER) {
+  app.set('trust proxy', 1);
+}
 
 // Configuración CORS más permisiva para desarrollo y apps móviles
 const corsOptions = {
