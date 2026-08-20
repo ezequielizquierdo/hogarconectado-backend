@@ -5,7 +5,9 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 const path = require('path');
-require('dotenv').config();
+const fs = require('fs');
+const localEnvPath = fs.existsSync('.env') ? '.env' : (fs.existsSync('.env.atlas') ? '.env.atlas' : undefined);
+require('dotenv').config(localEnvPath ? { path: localEnvPath } : undefined);
 
 const app = express();
 
@@ -158,25 +160,29 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Wake up endpoint para mantener el servidor activo
-app.get('/wake-up', (req, res) => {
-  res.json({ 
-    message: 'Server is awake!', 
-    timestamp: new Date().toISOString() 
-  });
-});
-
 // Importar rutas
 const categoriasRoutes = require('./routes/categorias');
 const productosRoutes = require('./routes/productos');
 const cotizacionesRoutes = require('./routes/cotizaciones');
 const uploadRoutes = require('./routes/upload');
+const authRoutes = require('./routes/auth');
+const usuariosRoutes = require('./routes/usuarios');
+const { authenticate } = require('./middleware/auth');
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 // Usar rutas
-app.use('/api/categorias', categoriasRoutes);
-app.use('/api/productos', productosRoutes);
-app.use('/api/cotizaciones', cotizacionesRoutes);
-app.use('/api/upload', uploadRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/categorias', authenticate, categoriasRoutes);
+app.use('/api/productos', authenticate, productosRoutes);
+app.use('/api/cotizaciones', authenticate, cotizacionesRoutes);
+app.use('/api/upload', authenticate, uploadRoutes);
+app.use('/api/usuarios', authenticate, usuariosRoutes);
 
 // Middleware de manejo de errores
 app.use((err, req, res, next) => {

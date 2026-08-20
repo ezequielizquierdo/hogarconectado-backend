@@ -1,90 +1,71 @@
 const mongoose = require('mongoose');
 
+const preciosSnapshotSchema = new mongoose.Schema({
+  contado: Number,
+  tresCuotas: { total: Number, cuota: Number },
+  seisCuotas: { total: Number, cuota: Number }
+}, { _id: false });
+
 const cotizacionSchema = new mongoose.Schema({
-  producto: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Producto',
-    required: [true, 'El producto es requerido']
+  datosContacto: {
+    nombre: { type: String, required: true },
+    telefono: { type: String, required: true },
+    email: String
   },
-  datosProducto: {
-    // Snapshot de los datos del producto al momento de la cotización
-    categoria: String,
-    marca: String,
-    modelo: String,
-    descripcion: String,
-    precioBase: Number
-  },
-  precios: {
-    contado: { type: Number, required: true },
-    tresCuotas: {
-      total: Number,
-      cuota: Number
-    },
-    seisCuotas: {
-      total: Number,
-      cuota: Number
+  productos: [{
+    producto: { type: mongoose.Schema.Types.ObjectId, ref: 'Producto', required: true },
+    cantidad: { type: Number, min: 1, required: true },
+    detalles: {
+      categoria: String,
+      marca: String,
+      modelo: String,
+      precioBase: Number,
+      precios: preciosSnapshotSchema
     }
+  }],
+  modalidadPago: {
+    type: String,
+    enum: ['contado', '3-cuotas', '6-cuotas'],
+    default: 'contado'
   },
-  factoresUsados: {
-    ganancia: { type: Number, default: 0.30 },
-    factor3Cuotas: { type: Number, default: 1.1298 },
-    factor6Cuotas: { type: Number, default: 1.2138 }
-  },
-  cliente: {
-    nombre: String,
-    telefono: String,
-    email: String,
-    notas: String
+  totales: {
+    subtotal: { type: Number, default: 0 },
+    total: { type: Number, default: 0 }
   },
   estado: {
     type: String,
-    enum: ['borrador', 'enviado', 'aceptado', 'rechazado', 'vencido'],
-    default: 'borrador'
+    enum: ['pendiente', 'enviada', 'confirmada', 'cancelada'],
+    default: 'pendiente'
   },
-  validaHasta: {
-    type: Date,
-    default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 días desde creación
-  },
-  notas: String,
-  mensajeGenerado: String // El mensaje formateado para WhatsApp/Instagram
-}, {
-  timestamps: true
-});
+  observaciones: String,
+  creadaPor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true }
+}, { timestamps: true });
 
-// Índices
-cotizacionSchema.index({ producto: 1 });
-cotizacionSchema.index({ estado: 1 });
-cotizacionSchema.index({ validaHasta: 1 });
-cotizacionSchema.index({ createdAt: -1 });
+cotizacionSchema.index({ creadaPor: 1, createdAt: -1 });
+cotizacionSchema.index({ estado: 1, createdAt: -1 });
 
-// Método para verificar si la cotización está vigente
-cotizacionSchema.methods.estaVigente = function() {
-  return new Date() <= this.validaHasta;
+cotizacionSchema.methods.calcularTotales = function() {
+  const key = this.modalidadPago === '3-cuotas'
+    ? ['tresCuotas', 'total']
+    : this.modalidadPago === '6-cuotas'
+      ? ['seisCuotas', 'total']
+      : ['contado'];
+
+  this.totales.subtotal = this.productos.reduce((total, item) => {
+    const precios = item.detalles.precios;
+    const precio = key.length === 1 ? precios[key[0]] : precios[key[0]][key[1]];
+    return total + precio * item.cantidad;
+  }, 0);
+  this.totales.total = this.totales.subtotal;
+  return this.totales;
 };
 
-// Método para generar mensaje formateado
-cotizacionSchema.methods.generarMensaje = function() {
-  const mensaje = `🏠 *Hogar Conectado*
+cotizacionSchema.methods.generarMensajeWhatsApp = function() {
+  const detalle = this.productos.map(item => (
+    `• ${item.detalles.marca} ${item.detalles.modelo} x${item.cantidad}`
+  )).join('\n');
 
-*Cotización*
-📦 ${this.datosProducto.categoria?.toUpperCase() || 'N/A'}
-🏷️ ${this.datosProducto.marca?.toUpperCase()} - ${this.datosProducto.modelo?.toUpperCase()}
-${this.datosProducto.descripcion ? `✏️ ${this.datosProducto.descripcion.toUpperCase()}` : ''}
-
-💰 *Precios:*
-💵 Contado: $${this.precios.contado.toLocaleString('es-AR')}
-💳 3 Cuotas: $${this.precios.tresCuotas.total.toLocaleString('es-AR')} (${this.precios.tresCuotas.cuota.toLocaleString('es-AR')} c/u)
-💳 6 Cuotas: $${this.precios.seisCuotas.total.toLocaleString('es-AR')} (${this.precios.seisCuotas.cuota.toLocaleString('es-AR')} c/u)
-
-📞 *Contacto*
-WhatsApp: +54 9 11 XXXX-XXXX
-📧 Email: contacto@hogarconectado.com
-
-✨ *Cotización válida hasta:* ${this.validaHasta.toLocaleDateString('es-AR')}
-
-¡Gracias por elegirnos! 🌟`;
-
-  return mensaje;
+  return `🏠 *Hogar Conectado*\n\n*Cotización para ${this.datosContacto.nombre}*\n${detalle}\n\n💰 Total: $${this.totales.total.toLocaleString('es-AR')}\nModalidad: ${this.modalidadPago}\n\n${this.observaciones || ''}`.trim();
 };
 
 module.exports = mongoose.model('Cotizacion', cotizacionSchema);

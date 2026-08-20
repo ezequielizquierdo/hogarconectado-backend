@@ -4,6 +4,8 @@ const { body, validationResult } = require('express-validator');
 const Producto = require('../models/Producto');
 const { getPricingConfig } = require('../utils/pricing');
 const Categoria = require('../models/Categoria');
+const { requireRoles } = require('../middleware/auth');
+const { deleteAssets } = require('../services/imageStorage');
 
 // GET /api/productos - Obtener todos los productos con filtros y paginación
 router.get('/', async (req, res) => {
@@ -155,7 +157,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/productos - Crear nuevo producto
-router.post('/', [
+router.post('/', requireRoles('editor', 'admin'), [
   body('categoria')
     .isMongoId()
     .withMessage('ID de categoría inválido'),
@@ -181,7 +183,7 @@ router.post('/', [
       });
     }
 
-    const { categoria, marca, modelo, precioBase, descripcion, especificaciones, tags } = req.body;
+    const { categoria, marca, modelo, precioBase, descripcion, especificaciones, tags, imagenes, imagenPublicIds, stock, activo } = req.body;
 
     // Verificar que la categoría existe
     const categoriaExiste = await Categoria.findById(categoria);
@@ -199,7 +201,11 @@ router.post('/', [
       precioBase,
       descripcion,
       especificaciones,
-      tags: tags || []
+      tags: tags || [],
+      imagenes: imagenes || [],
+      imagenPublicIds: imagenPublicIds || [],
+      stock,
+      activo
     });
 
     await nuevoProducto.save();
@@ -222,7 +228,7 @@ router.post('/', [
 });
 
 // PUT /api/productos/:id - Actualizar producto
-router.put('/:id', [
+router.put('/:id', requireRoles('editor', 'admin'), [
   body('categoria')
     .optional()
     .isMongoId()
@@ -252,18 +258,20 @@ router.put('/:id', [
       });
     }
 
+    const productoAnterior = await Producto.findById(req.params.id);
+    if (!productoAnterior) {
+      return res.status(404).json({ success: false, message: 'Producto no encontrado' });
+    }
+
     const producto = await Producto.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
     ).populate('categoria', 'nombre icono');
 
-    if (!producto) {
-      return res.status(404).json({
-        success: false,
-        message: 'Producto no encontrado'
-      });
-    }
+    const idsActuales = new Set(req.body.imagenPublicIds || productoAnterior.imagenPublicIds || []);
+    const idsRemovidos = (productoAnterior.imagenPublicIds || []).filter(id => !idsActuales.has(id));
+    await deleteAssets(idsRemovidos);
 
     res.json({
       success: true,
@@ -280,13 +288,9 @@ router.put('/:id', [
 });
 
 // DELETE /api/productos/:id - Eliminar producto (soft delete)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRoles('admin'), async (req, res) => {
   try {
-    const producto = await Producto.findByIdAndUpdate(
-      req.params.id,
-      { activo: false },
-      { new: true }
-    );
+    const producto = await Producto.findById(req.params.id);
 
     if (!producto) {
       return res.status(404).json({
@@ -294,6 +298,12 @@ router.delete('/:id', async (req, res) => {
         message: 'Producto no encontrado'
       });
     }
+
+    await deleteAssets(producto.imagenPublicIds);
+    producto.activo = false;
+    producto.imagenes = [];
+    producto.imagenPublicIds = [];
+    await producto.save();
 
     res.json({
       success: true,

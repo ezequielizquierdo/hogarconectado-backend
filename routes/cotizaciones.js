@@ -1,337 +1,176 @@
 const express = require('express');
-const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const Cotizacion = require('../models/Cotizacion');
 const Producto = require('../models/Producto');
+const { canAccessOwnedResource, requireRoles } = require('../middleware/auth');
 
-// POST /api/cotizaciones - Crear nueva cotización
-router.post('/', [
-  body('datosContacto.nombre')
-    .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('El nombre debe tener entre 2 y 100 caracteres'),
-  body('datosContacto.telefono')
-    .trim()
-    .isLength({ min: 8, max: 20 })
-    .withMessage('El teléfono debe tener entre 8 y 20 caracteres'),
-  body('productos')
-    .isArray({ min: 1 })
-    .withMessage('Debe incluir al menos un producto'),
-  body('productos.*.producto')
-    .isMongoId()
-    .withMessage('ID de producto inválido'),
-  body('productos.*.cantidad')
-    .isInt({ min: 1 })
-    .withMessage('La cantidad debe ser un número entero positivo')
-], async (req, res) => {
+const router = express.Router();
+
+const validators = [
+  body('datosContacto.nombre').trim().isLength({ min: 2, max: 100 }),
+  body('datosContacto.telefono').trim().isLength({ min: 8, max: 20 }),
+  body('productos').isArray({ min: 1 }),
+  body('productos.*.producto').isMongoId(),
+  body('productos.*.cantidad').isInt({ min: 1 }),
+  body('modalidadPago').optional().isIn(['contado', '3-cuotas', '6-cuotas'])
+];
+
+async function findAuthorized(req, res) {
+  const cotizacion = await Cotizacion.findById(req.params.id);
+  if (!cotizacion) {
+    res.status(404).json({ success: false, message: 'Cotización no encontrada' });
+    return null;
+  }
+  if (!canAccessOwnedResource(cotizacion.creadaPor, req.user)) {
+    res.status(403).json({ success: false, message: 'No tenés acceso a esta cotización' });
+    return null;
+  }
+  return cotizacion;
+}
+
+router.post('/', validators, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Errores de validación',
-        errors: errors.array()
-      });
+      return res.status(400).json({ success: false, message: 'Errores de validación', errors: errors.array() });
     }
 
     const { datosContacto, productos, modalidadPago, observaciones } = req.body;
-
-    // Verificar que todos los productos existen
-    const productosIds = productos.map(p => p.producto);
-    const productosEncontrados = await Producto.find({ 
-      _id: { $in: productosIds },
-      activo: true 
-    }).populate('categoria', 'nombre');
-
-    if (productosEncontrados.length !== productosIds.length) {
-      return res.status(400).json({
-        success: false,
-        message: 'Uno o más productos no existen o no están disponibles'
-      });
+    const productosIds = productos.map(item => item.producto);
+    const encontrados = await Producto.find({ _id: { $in: productosIds }, activo: true })
+      .populate('categoria', 'nombre');
+    if (encontrados.length !== new Set(productosIds).size) {
+      return res.status(400).json({ success: false, message: 'Uno o más productos no existen o no están disponibles' });
     }
 
-    // Crear cotización
-    const nuevaCotizacion = new Cotizacion({
+    const cotizacion = new Cotizacion({
       datosContacto,
+      modalidadPago: modalidadPago || 'contado',
+      observaciones,
+      creadaPor: req.user._id,
       productos: productos.map(item => {
-        const producto = productosEncontrados.find(p => p._id.toString() === item.producto);
-        const precios = producto.calcularCuotas();
-        
+        const producto = encontrados.find(found => found._id.toString() === item.producto);
         return {
-          producto: item.producto,
+          producto: producto._id,
           cantidad: item.cantidad,
           detalles: {
             categoria: producto.categoria.nombre,
             marca: producto.marca,
             modelo: producto.modelo,
             precioBase: producto.precioBase,
-            precios: precios
+            precios: producto.calcularCuotas()
           }
         };
-      }),
-      modalidadPago: modalidadPago || 'contado',
-      observaciones
+      })
     });
-
-    // Calcular totales
-    nuevaCotizacion.calcularTotales();
-
-    await nuevaCotizacion.save();
-
-    res.status(201).json({
-      success: true,
-      message: 'Cotización creada exitosamente',
-      data: nuevaCotizacion
-    });
+    cotizacion.calcularTotales();
+    await cotizacion.save();
+    res.status(201).json({ success: true, message: 'Cotización creada exitosamente', data: cotizacion });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al crear cotización',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error al crear cotización' });
   }
 });
 
-// GET /api/cotizaciones - Obtener todas las cotizaciones
+router.get('/estadisticas/resumen', requireRoles('editor', 'admin'), async (req, res) => {
+  try {
+    const hoy = new Date();
+    const inicioDia = new Date(hoy); inicioDia.setHours(0, 0, 0, 0);
+    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    const inicioSemana = new Date(inicioDia); inicioSemana.setDate(inicioDia.getDate() - inicioDia.getDay());
+    const [total, dia, semana, mes, porEstado] = await Promise.all([
+      Cotizacion.countDocuments(),
+      Cotizacion.countDocuments({ createdAt: { $gte: inicioDia } }),
+      Cotizacion.countDocuments({ createdAt: { $gte: inicioSemana } }),
+      Cotizacion.countDocuments({ createdAt: { $gte: inicioMes } }),
+      Cotizacion.aggregate([{ $group: { _id: '$estado', count: { $sum: 1 } } }])
+    ]);
+    res.json({ success: true, data: {
+      total, hoy: dia, semana, mes,
+      porEstado: Object.fromEntries(porEstado.map(item => [item._id, item.count]))
+    } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error al obtener estadísticas' });
+  }
+});
+
 router.get('/', async (req, res) => {
   try {
-    const {
-      estado = 'todas',
-      fechaDesde,
-      fechaHasta,
-      limite = 20,
-      pagina = 1,
-      buscar
-    } = req.query;
-
-    // Construir filtros
-    const filtros = {};
-    
-    if (estado !== 'todas') {
-      filtros.estado = estado;
-    }
-
-    if (fechaDesde || fechaHasta) {
+    const limite = Math.max(1, Math.min(Number.parseInt(req.query.limite) || 20, 100));
+    const pagina = Math.max(1, Number.parseInt(req.query.pagina) || 1);
+    const filtros = req.user.rol === 'consulta' ? { creadaPor: req.user._id } : {};
+    if (req.query.estado && req.query.estado !== 'todas') filtros.estado = req.query.estado;
+    if (req.query.fechaDesde || req.query.fechaHasta) {
       filtros.createdAt = {};
-      if (fechaDesde) filtros.createdAt.$gte = new Date(fechaDesde);
-      if (fechaHasta) filtros.createdAt.$lte = new Date(fechaHasta);
+      if (req.query.fechaDesde) filtros.createdAt.$gte = new Date(req.query.fechaDesde);
+      if (req.query.fechaHasta) filtros.createdAt.$lte = new Date(req.query.fechaHasta);
     }
-
-    // Búsqueda por nombre o teléfono
-    if (buscar) {
+    if (req.query.buscar) {
       filtros.$or = [
-        { 'datosContacto.nombre': new RegExp(buscar, 'i') },
-        { 'datosContacto.telefono': new RegExp(buscar, 'i') }
+        { 'datosContacto.nombre': new RegExp(req.query.buscar, 'i') },
+        { 'datosContacto.telefono': new RegExp(req.query.buscar, 'i') }
       ];
     }
 
-    // Configurar paginación
-    const skip = (parseInt(pagina) - 1) * parseInt(limite);
-
-    const cotizaciones = await Cotizacion.find(filtros)
-      .populate('productos.producto', 'marca modelo categoria')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limite));
-
-    const total = await Cotizacion.countDocuments(filtros);
-
-    res.json({
-      success: true,
-      data: cotizaciones,
-      pagination: {
-        pagina: parseInt(pagina),
-        limite: parseInt(limite),
-        total,
-        paginas: Math.ceil(total / parseInt(limite))
-      }
-    });
+    const [data, total] = await Promise.all([
+      Cotizacion.find(filtros)
+        .populate('productos.producto', 'marca modelo categoria')
+        .populate('creadaPor', 'nombre email')
+        .sort({ createdAt: -1 }).skip((pagina - 1) * limite).limit(limite),
+      Cotizacion.countDocuments(filtros)
+    ]);
+    res.json({ success: true, data, pagination: { pagina, limite, total, paginas: Math.ceil(total / limite) } });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener cotizaciones',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error al obtener cotizaciones' });
   }
 });
 
-// GET /api/cotizaciones/:id - Obtener una cotización por ID
 router.get('/:id', async (req, res) => {
   try {
-    const cotizacion = await Cotizacion.findById(req.params.id)
-      .populate('productos.producto', 'marca modelo categoria descripcion');
-    
-    if (!cotizacion) {
-      return res.status(404).json({
-        success: false,
-        message: 'Cotización no encontrada'
-      });
-    }
-
-    res.json({
-      success: true,
-      data: cotizacion
-    });
+    const cotizacion = await findAuthorized(req, res);
+    if (!cotizacion) return;
+    await cotizacion.populate('productos.producto', 'marca modelo categoria descripcion');
+    res.json({ success: true, data: cotizacion });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener cotización',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error al obtener cotización' });
   }
 });
 
-// PUT /api/cotizaciones/:id/estado - Actualizar estado de cotización
-router.put('/:id/estado', [
-  body('estado')
-    .isIn(['pendiente', 'enviada', 'confirmada', 'cancelada'])
-    .withMessage('Estado inválido')
-], async (req, res) => {
+router.put('/:id/estado', [body('estado').isIn(['pendiente', 'enviada', 'confirmada', 'cancelada'])], async (req, res) => {
   try {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Errores de validación',
-        errors: errors.array()
-      });
-    }
-
-    const { estado } = req.body;
-
-    const cotizacion = await Cotizacion.findByIdAndUpdate(
-      req.params.id,
-      { estado },
-      { new: true }
-    );
-
-    if (!cotizacion) {
-      return res.status(404).json({
-        success: false,
-        message: 'Cotización no encontrada'
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Estado actualizado exitosamente',
-      data: cotizacion
-    });
+    if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+    const cotizacion = await findAuthorized(req, res);
+    if (!cotizacion) return;
+    cotizacion.estado = req.body.estado;
+    await cotizacion.save();
+    res.json({ success: true, data: cotizacion, message: 'Estado actualizado exitosamente' });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al actualizar estado',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error al actualizar estado' });
   }
 });
 
-// GET /api/cotizaciones/:id/mensaje - Generar mensaje de WhatsApp
 router.get('/:id/mensaje', async (req, res) => {
   try {
-    const cotizacion = await Cotizacion.findById(req.params.id)
-      .populate('productos.producto', 'marca modelo categoria');
-    
-    if (!cotizacion) {
-      return res.status(404).json({
-        success: false,
-        message: 'Cotización no encontrada'
-      });
-    }
-
+    const cotizacion = await findAuthorized(req, res);
+    if (!cotizacion) return;
     const mensaje = cotizacion.generarMensajeWhatsApp();
-
-    res.json({
-      success: true,
-      data: {
-        mensaje,
-        telefono: cotizacion.datosContacto.telefono,
-        urlWhatsApp: `https://wa.me/${cotizacion.datosContacto.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(mensaje)}`
-      }
-    });
+    res.json({ success: true, data: {
+      mensaje,
+      telefono: cotizacion.datosContacto.telefono,
+      urlWhatsApp: `https://wa.me/${cotizacion.datosContacto.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(mensaje)}`
+    } });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al generar mensaje',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error al generar mensaje' });
   }
 });
 
-// DELETE /api/cotizaciones/:id - Eliminar cotización
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRoles('admin'), async (req, res) => {
   try {
     const cotizacion = await Cotizacion.findByIdAndDelete(req.params.id);
-
-    if (!cotizacion) {
-      return res.status(404).json({
-        success: false,
-        message: 'Cotización no encontrada'
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Cotización eliminada exitosamente'
-    });
+    if (!cotizacion) return res.status(404).json({ success: false, message: 'Cotización no encontrada' });
+    res.json({ success: true, message: 'Cotización eliminada exitosamente' });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al eliminar cotización',
-      error: error.message
-    });
-  }
-});
-
-// GET /api/cotizaciones/estadisticas/resumen - Obtener estadísticas básicas
-router.get('/estadisticas/resumen', async (req, res) => {
-  try {
-    const hoy = new Date();
-    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    const inicioSemana = new Date(hoy.setDate(hoy.getDate() - hoy.getDay()));
-
-    const [totalCotizaciones, cotizacionesHoy, cotizacionesSemana, cotizacionesMes] = await Promise.all([
-      Cotizacion.countDocuments(),
-      Cotizacion.countDocuments({ 
-        createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
-      }),
-      Cotizacion.countDocuments({ 
-        createdAt: { $gte: inicioSemana }
-      }),
-      Cotizacion.countDocuments({ 
-        createdAt: { $gte: inicioMes }
-      })
-    ]);
-
-    // Estadísticas por estado
-    const porEstado = await Cotizacion.aggregate([
-      {
-        $group: {
-          _id: '$estado',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    res.json({
-      success: true,
-      data: {
-        total: totalCotizaciones,
-        hoy: cotizacionesHoy,
-        semana: cotizacionesSemana,
-        mes: cotizacionesMes,
-        porEstado: porEstado.reduce((acc, item) => {
-          acc[item._id] = item.count;
-          return acc;
-        }, {})
-      }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener estadísticas',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error al eliminar cotización' });
   }
 });
 

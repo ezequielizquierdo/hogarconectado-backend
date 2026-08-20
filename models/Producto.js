@@ -30,6 +30,7 @@ const productoSchema = new mongoose.Schema({
     maxlength: [1000, 'La descripción no puede exceder 1000 caracteres']
   },
   imagenes: [String], // Array de URLs de imágenes
+  imagenPublicIds: [String], // Identificadores para reemplazo y eliminación
   especificaciones: {
     tipo: String,
     color: String,
