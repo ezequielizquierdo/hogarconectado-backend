@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 const path = require('path');
 const fs = require('fs');
+const { createCorsOptions } = require('./utils/corsConfig');
 const localEnvPath = fs.existsSync('.env') ? '.env' : (fs.existsSync('.env.atlas') ? '.env.atlas' : undefined);
 require('dotenv').config(localEnvPath ? { path: localEnvPath } : undefined);
 
@@ -17,47 +18,7 @@ if (process.env.NODE_ENV === 'production' || process.env.RENDER) {
   app.set('trust proxy', 1);
 }
 
-// Configuración CORS más permisiva para desarrollo y apps móviles
-const corsOptions = {
-  origin: function (origin, callback) {
-    // En desarrollo, permitir todos los orígenes
-    if (process.env.NODE_ENV !== 'production') {
-      return callback(null, true);
-    }
-    // En producción, permitir apps móviles y dominios específicos
-    const allowedOrigins = [
-      'https://hogarconectado-backend.onrender.com',
-      'https://hogarconectado-frontend.vercel.app',
-      'https://hogarconectado.netlify.app',
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:8081', // React Native Metro
-      'http://10.0.2.2:3000',  // Android Emulator
-      'http://127.0.0.1:3000',
-      // Apps móviles no tienen origin, permitirlas
-      null,
-      undefined
-    ];
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('No permitido por CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With',
-    'Accept',
-    'Origin',
-    'Access-Control-Request-Method',
-    'Access-Control-Request-Headers'
-  ],
-  exposedHeaders: ['Content-Length', 'Content-Type'],
-  optionsSuccessStatus: 200 // Para soportar navegadores legacy
-};
+const corsOptions = createCorsOptions();
 
 // Middlewares de seguridad
 app.use(helmet({
