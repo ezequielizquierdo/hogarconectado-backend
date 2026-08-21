@@ -35,6 +35,18 @@ test('permite FRONTEND_URL en producción y rechaza otros orígenes', async () =
   assert.match(rejected.error.message, /CORS/);
 });
 
+test('permite el frontend oficial de producción sin depender de FRONTEND_URL', async () => {
+  const options = createCorsOptions({
+    nodeEnv: 'production',
+    frontendUrl: ''
+  });
+
+  assert.deepEqual(
+    await validateOrigin(options, 'https://hogarconectado.onrender.com'),
+    { error: null, allowed: true }
+  );
+});
+
 test('permite solicitudes sin Origin para clientes móviles', async () => {
   const options = createCorsOptions({ nodeEnv: 'production' });
   assert.deepEqual(await validateOrigin(options, undefined), { error: null, allowed: true });

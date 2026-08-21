@@ -1,5 +1,6 @@
 const DEFAULT_ALLOWED_ORIGINS = [
   'https://hogarconectado-backend.onrender.com',
+  'https://hogarconectado.onrender.com',
   'https://hogarconectado-frontend.vercel.app',
   'https://hogarconectado.netlify.app',
   'http://localhost:3000',
