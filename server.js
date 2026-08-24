@@ -125,6 +125,7 @@ app.get('/health', (req, res) => {
 const categoriasRoutes = require('./routes/categorias');
 const productosRoutes = require('./routes/productos');
 const cotizacionesRoutes = require('./routes/cotizaciones');
+const preciosRoutes = require('./routes/precios');
 const uploadRoutes = require('./routes/upload');
 const authRoutes = require('./routes/auth');
 const usuariosRoutes = require('./routes/usuarios');
@@ -142,6 +143,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/categorias', authenticate, categoriasRoutes);
 app.use('/api/productos', authenticate, productosRoutes);
 app.use('/api/cotizaciones', authenticate, cotizacionesRoutes);
+app.use('/api/precios', authenticate, preciosRoutes);
 app.use('/api/upload', authenticate, uploadRoutes);
 app.use('/api/usuarios', authenticate, usuariosRoutes);
 

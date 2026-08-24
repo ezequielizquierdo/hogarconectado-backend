@@ -1,5 +1,6 @@
 const DEFAULT_PRICING = Object.freeze({
   ganancia: 0.30,
+  factorFactura: 1.05,
   factor3Cuotas: 1.1298,
   factor6Cuotas: 1.2138
 });
@@ -12,6 +13,7 @@ function parseNonNegativeNumber(value, fallback) {
 function getPricingConfig(env = process.env) {
   return {
     ganancia: parseNonNegativeNumber(env.GANANCIA_DEFAULT, DEFAULT_PRICING.ganancia),
+    factorFactura: DEFAULT_PRICING.factorFactura,
     factor3Cuotas: parseNonNegativeNumber(env.FACTOR_3_CUOTAS, DEFAULT_PRICING.factor3Cuotas),
     factor6Cuotas: parseNonNegativeNumber(env.FACTOR_6_CUOTAS, DEFAULT_PRICING.factor6Cuotas)
   };
@@ -40,8 +42,32 @@ function calculatePrices(precioBase, config = DEFAULT_PRICING) {
   };
 }
 
+function calculateDetailedPrices(precioBase, config = DEFAULT_PRICING) {
+  const prices = calculatePrices(precioBase, config);
+  const base = Number(precioBase);
+  const factorFactura = parseNonNegativeNumber(
+    config.factorFactura,
+    DEFAULT_PRICING.factorFactura
+  );
+  const costoFacturado = base * factorFactura;
+
+  return {
+    precioBase: base,
+    porcentaje: config.ganancia * 100,
+    ganancia: base * config.ganancia,
+    efectivo: prices.contado,
+    factura: {
+      costoBase: costoFacturado,
+      unPago: costoFacturado * (1 + config.ganancia)
+    },
+    tresCuotas: prices.tresCuotas,
+    seisCuotas: prices.seisCuotas
+  };
+}
+
 module.exports = {
   DEFAULT_PRICING,
+  calculateDetailedPrices,
   calculatePrices,
   getPricingConfig,
   parseNonNegativeNumber

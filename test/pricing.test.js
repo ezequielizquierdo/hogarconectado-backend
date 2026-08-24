@@ -1,6 +1,10 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { calculatePrices, getPricingConfig } = require('../utils/pricing');
+const {
+  calculateDetailedPrices,
+  calculatePrices,
+  getPricingConfig
+} = require('../utils/pricing');
 
 function assertClose(actual, expected) {
   assert.ok(Math.abs(actual - expected) < 1e-6, `${actual} no coincide con ${expected}`);
@@ -15,6 +19,7 @@ test('interpreta GANANCIA_DEFAULT como número y no como texto concatenado', () 
 
   assert.deepEqual(config, {
     ganancia: 0.30,
+    factorFactura: 1.05,
     factor3Cuotas: 1.1298,
     factor6Cuotas: 1.2138
   });
@@ -35,6 +40,24 @@ test('calcula contado, totales y valores por cuota', () => {
   assertClose(prices.seisCuotas.cuota, 156883.65);
 });
 
+test('reproduce el desglose de la fila de referencia del Excel', () => {
+  const prices = calculateDetailedPrices(705000, {
+    ganancia: 0.10,
+    factorFactura: 1.05,
+    factor3Cuotas: 1.1298,
+    factor6Cuotas: 1.2138
+  });
+
+  assertClose(prices.ganancia, 70500);
+  assertClose(prices.efectivo, 775500);
+  assertClose(prices.factura.costoBase, 740250);
+  assertClose(prices.factura.unPago, 814275);
+  assertClose(prices.tresCuotas.total, 876159.9);
+  assertClose(prices.tresCuotas.cuota, 292053.3);
+  assertClose(prices.seisCuotas.total, 941301.9);
+  assertClose(prices.seisCuotas.cuota, 156883.65);
+});
+
 test('usa valores seguros cuando las variables son inválidas', () => {
   assert.deepEqual(getPricingConfig({
     GANANCIA_DEFAULT: 'no-es-numero',
@@ -42,6 +65,7 @@ test('usa valores seguros cuando las variables son inválidas', () => {
     FACTOR_6_CUOTAS: ''
   }), {
     ganancia: 0.30,
+    factorFactura: 1.05,
     factor3Cuotas: 1.1298,
     factor6Cuotas: 1.2138
   });
