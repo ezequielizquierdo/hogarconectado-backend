@@ -26,8 +26,14 @@ async function authenticate(req, res, next) {
 
     const payload = jwt.verify(token, getJwtSecret());
     const usuario = await Usuario.findById(payload.sub);
-    if (!usuario || usuario.estado !== 'activo') {
-      return res.status(403).json({ success: false, message: 'Usuario sin acceso activo' });
+    if (!usuario) {
+      return res.status(403).json({ success: false, message: 'La cuenta asociada a esta sesión ya no está disponible' });
+    }
+    if (usuario.estado === 'pendiente') {
+      return res.status(403).json({ success: false, code: 'ACCESS_PENDING', message: 'Tu acceso todavía está pendiente de aprobación' });
+    }
+    if (usuario.estado === 'bloqueado') {
+      return res.status(403).json({ success: false, code: 'ACCESS_BLOCKED', message: 'Tu acceso fue bloqueado. Contactá a un administrador para solicitar la reactivación' });
     }
 
     req.user = usuario;
