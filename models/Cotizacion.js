@@ -20,6 +20,7 @@ const cotizacionSchema = new mongoose.Schema({
       marca: String,
       modelo: String,
       precioBase: Number,
+      porcentajeAplicado: Number,
       precios: preciosSnapshotSchema
     }
   }],

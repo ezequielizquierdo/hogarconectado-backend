@@ -13,6 +13,7 @@ function makeQuote(modalidadPago) {
       cantidad: 2,
       detalles: {
         marca: 'Marca', modelo: 'Modelo', precioBase: 100,
+        porcentajeAplicado: 30,
         precios: {
           contado: 130,
           tresCuotas: { total: 150, cuota: 50 },
@@ -30,4 +31,10 @@ test('calcula el total según modalidad y cantidad', () => {
   assert.equal(tres.calcularTotales().total, 300);
   const seis = makeQuote('6-cuotas');
   assert.equal(seis.calcularTotales().total, 360);
+});
+
+test('conserva el porcentaje aplicado junto al snapshot de precios', () => {
+  const cotizacion = makeQuote('contado');
+  assert.equal(cotizacion.productos[0].detalles.porcentajeAplicado, 30);
+  assert.equal(cotizacion.productos[0].detalles.precios.contado, 130);
 });

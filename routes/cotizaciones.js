@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const Cotizacion = require('../models/Cotizacion');
 const Producto = require('../models/Producto');
 const { canAccessOwnedResource, requireRoles } = require('../middleware/auth');
+const { calculatePrices, getPricingConfig } = require('../utils/pricing');
 
 const router = express.Router();
 
@@ -12,6 +13,7 @@ const validators = [
   body('productos').isArray({ min: 1 }),
   body('productos.*.producto').isMongoId(),
   body('productos.*.cantidad').isInt({ min: 1 }),
+  body('productos.*.porcentajeAplicado').optional().isFloat({ min: 0, max: 100 }),
   body('modalidadPago').optional().isIn(['contado', '3-cuotas', '6-cuotas'])
 ];
 
@@ -50,6 +52,12 @@ router.post('/', validators, async (req, res) => {
       creadaPor: req.user._id,
       productos: productos.map(item => {
         const producto = encontrados.find(found => found._id.toString() === item.producto);
+        const config = getPricingConfig(process.env);
+        const porcentajeAplicado = item.porcentajeAplicado ?? config.ganancia * 100;
+        const precios = calculatePrices(producto.precioBase, {
+          ...config,
+          ganancia: porcentajeAplicado / 100
+        });
         return {
           producto: producto._id,
           cantidad: item.cantidad,
@@ -58,7 +66,8 @@ router.post('/', validators, async (req, res) => {
             marca: producto.marca,
             modelo: producto.modelo,
             precioBase: producto.precioBase,
-            precios: producto.calcularCuotas()
+            porcentajeAplicado,
+            precios
           }
         };
       })
