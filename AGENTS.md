@@ -27,6 +27,8 @@ npm start
 
 Antes de entregar cambios de código, ejecutar `npm test`. No afirmar que una modificación está verificada si las pruebas relevantes no se ejecutaron correctamente.
 
+GitHub Actions ejecuta instalación reproducible, comprobación de sintaxis y pruebas en pull requests y pushes a `main`. El workflow valida pero no despliega; Render conserva esa responsabilidad.
+
 ## Configuración
 
 Variables principales, sin documentar aquí sus valores reales:
