@@ -3,7 +3,8 @@ const assert = require('node:assert/strict');
 const {
   calculateDetailedPrices,
   calculatePrices,
-  getPricingConfig
+  getPricingConfig,
+  getProductPricingConfig
 } = require('../utils/pricing');
 
 function assertClose(actual, expected) {
@@ -74,4 +75,23 @@ test('usa valores seguros cuando las variables son inválidas', () => {
 test('rechaza precios base inválidos', () => {
   assert.throws(() => calculatePrices(-1), /precio base/i);
   assert.throws(() => calculatePrices('abc'), /precio base/i);
+});
+
+test('permite sobrescribir la ganancia para un producto', () => {
+  const config = getProductPricingConfig(15, {
+    GANANCIA_DEFAULT: '0.30',
+    FACTOR_3_CUOTAS: '1.1298',
+    FACTOR_6_CUOTAS: '1.2138'
+  });
+
+  assert.equal(config.ganancia, 0.15);
+  assertClose(calculatePrices(100000, config).contado, 115000);
+});
+
+test('conserva la ganancia global cuando el producto no tiene porcentaje propio', () => {
+  const config = getProductPricingConfig(undefined, {
+    GANANCIA_DEFAULT: '0.30'
+  });
+
+  assert.equal(config.ganancia, 0.30);
 });

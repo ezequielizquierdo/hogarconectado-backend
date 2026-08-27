@@ -19,6 +19,27 @@ function getPricingConfig(env = process.env) {
   };
 }
 
+function getProductPricingConfig(porcentajeGanancia, env = process.env) {
+  const config = getPricingConfig(env);
+  if (
+    porcentajeGanancia === undefined ||
+    porcentajeGanancia === null ||
+    porcentajeGanancia === ''
+  ) {
+    return config;
+  }
+
+  const porcentaje = Number(porcentajeGanancia);
+  if (!Number.isFinite(porcentaje) || porcentaje < 0 || porcentaje > 100) {
+    return config;
+  }
+
+  return {
+    ...config,
+    ganancia: porcentaje / 100
+  };
+}
+
 function calculatePrices(precioBase, config = DEFAULT_PRICING) {
   const base = Number(precioBase);
   if (!Number.isFinite(base) || base < 0) {
@@ -70,5 +91,6 @@ module.exports = {
   calculateDetailedPrices,
   calculatePrices,
   getPricingConfig,
+  getProductPricingConfig,
   parseNonNegativeNumber
 };

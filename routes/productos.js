@@ -171,7 +171,11 @@ router.post('/', requireRoles('editor', 'admin'), [
     .withMessage('El modelo debe tener entre 1 y 200 caracteres'),
   body('precioBase')
     .isFloat({ min: 0 })
-    .withMessage('El precio base debe ser un número positivo')
+    .withMessage('El precio base debe ser un número positivo'),
+  body('porcentajeGanancia')
+    .optional()
+    .isFloat({ min: 0, max: 100 })
+    .withMessage('El porcentaje de ganancia debe estar entre 0 y 100')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -183,7 +187,7 @@ router.post('/', requireRoles('editor', 'admin'), [
       });
     }
 
-    const { categoria, marca, modelo, precioBase, descripcion, especificaciones, tags, imagenes, imagenPublicIds, stock, activo } = req.body;
+    const { categoria, marca, modelo, precioBase, porcentajeGanancia, descripcion, especificaciones, tags, imagenes, imagenPublicIds, stock, activo } = req.body;
 
     // Verificar que la categoría existe
     const categoriaExiste = await Categoria.findById(categoria);
@@ -199,6 +203,7 @@ router.post('/', requireRoles('editor', 'admin'), [
       marca,
       modelo,
       precioBase,
+      porcentajeGanancia,
       descripcion,
       especificaciones,
       tags: tags || [],
@@ -246,7 +251,11 @@ router.put('/:id', requireRoles('editor', 'admin'), [
   body('precioBase')
     .optional()
     .isFloat({ min: 0 })
-    .withMessage('El precio base debe ser un número positivo')
+    .withMessage('El precio base debe ser un número positivo'),
+  body('porcentajeGanancia')
+    .optional()
+    .isFloat({ min: 0, max: 100 })
+    .withMessage('El porcentaje de ganancia debe estar entre 0 y 100')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);

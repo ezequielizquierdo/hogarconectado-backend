@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { calculatePrices, getPricingConfig } = require('../utils/pricing');
+const { calculatePrices, getProductPricingConfig } = require('../utils/pricing');
 
 const productoSchema = new mongoose.Schema({
   categoria: {
@@ -23,6 +23,11 @@ const productoSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'El precio base es requerido'],
     min: [0, 'El precio no puede ser negativo']
+  },
+  porcentajeGanancia: {
+    type: Number,
+    min: [0, 'El porcentaje no puede ser negativo'],
+    max: [100, 'El porcentaje no puede superar 100']
   },
   descripcion: {
     type: String,
@@ -76,12 +81,25 @@ productoSchema.virtual('nombre').get(function() {
 
 // Método virtual para obtener precio con ganancia
 productoSchema.virtual('precioConGanancia').get(function() {
-  return calculatePrices(this.precioBase, getPricingConfig(process.env)).contado;
+  return calculatePrices(
+    this.precioBase,
+    getProductPricingConfig(this.porcentajeGanancia, process.env)
+  ).contado;
+});
+
+productoSchema.virtual('porcentajeGananciaAplicado').get(function() {
+  return getProductPricingConfig(
+    this.porcentajeGanancia,
+    process.env
+  ).ganancia * 100;
 });
 
 // Método para calcular precio en cuotas
 productoSchema.methods.calcularCuotas = function() {
-  return calculatePrices(this.precioBase, getPricingConfig(process.env));
+  return calculatePrices(
+    this.precioBase,
+    getProductPricingConfig(this.porcentajeGanancia, process.env)
+  );
 };
 
 module.exports = mongoose.model('Producto', productoSchema);
