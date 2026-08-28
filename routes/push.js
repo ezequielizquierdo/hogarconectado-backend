@@ -2,14 +2,19 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const PushSubscription = require('../models/PushSubscription');
 const { authenticate, requireRoles } = require('../middleware/auth');
-const { getPushConfig, sendTestNotification } = require('../services/pushNotifications');
+const { configureWebPush, sendTestNotification } = require('../services/pushNotifications');
 
 const router = express.Router();
 const asyncHandler = handler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
 router.use(authenticate, requireRoles('admin'));
 
 router.get('/public-key', (_req, res) => {
-  const config = getPushConfig();
+  let config;
+  try {
+    config = configureWebPush();
+  } catch {
+    return res.status(503).json({ success: false, message: 'La configuración de notificaciones no es válida' });
+  }
   if (!config) {
     return res.status(503).json({ success: false, message: 'Las notificaciones todavía no están configuradas' });
   }
