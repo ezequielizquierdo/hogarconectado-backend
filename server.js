@@ -130,6 +130,7 @@ const uploadRoutes = require('./routes/upload');
 const authRoutes = require('./routes/auth');
 const usuariosRoutes = require('./routes/usuarios');
 const consultasRoutes = require('./routes/consultas');
+const pushRoutes = require('./routes/push');
 const { authenticate } = require('./middleware/auth');
 
 const authLimiter = rateLimit({
@@ -142,6 +143,7 @@ const authLimiter = rateLimit({
 // Usar rutas
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/consultas', consultasRoutes);
+app.use('/api/push', pushRoutes);
 app.use('/api/categorias', categoriasRoutes);
 app.use('/api/productos', productosRoutes);
 app.use('/api/cotizaciones', authenticate, cotizacionesRoutes);

@@ -6,6 +6,7 @@ const Producto = require('../models/Producto');
 const { authenticate, requireRoles } = require('../middleware/auth');
 const { isValidPhone, normalizeContactName, normalizePhone } = require('../utils/contact');
 const { CONSULTA_ESTADOS, buildConsultaStateUpdate } = require('../utils/consultaState');
+const { notifyAdminsNewInquiry } = require('../services/pushNotifications');
 
 const router = express.Router();
 const asyncHandler = handler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
@@ -68,6 +69,10 @@ router.post('/', publicInquiryLimiter, createValidators, async (req, res) => {
       historialEstados: [{ estado: 'nueva' }],
       idempotencyKey
     });
+
+    void notifyAdminsNewInquiry(consulta).then(result => {
+      if (result.failed > 0) console.warn(`Web Push: ${result.failed} envío(s) rechazado(s) por el proveedor`);
+    }).catch(() => undefined);
 
     return res.status(201).json({
       success: true,

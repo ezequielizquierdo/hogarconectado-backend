@@ -45,6 +45,7 @@ Variables principales, sin documentar aquí sus valores reales:
 - `GOOGLE_CLIENT_ID`
 - `INITIAL_ADMIN_EMAIL`
 - `CLOUDINARY_URL`, o las variables separadas de Cloudinary
+- `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` para Web Push
 
 No versionar `.env`, credenciales, cadenas de conexión ni secretos.
 
@@ -69,6 +70,7 @@ No versionar `.env`, credenciales, cadenas de conexión ni secretos.
 - Mantener validación de entrada, Helmet, CORS y rate limiting.
 - No registrar tokens, secretos, contraseñas ni cadenas de conexión.
 - Los mensajes de error de producción no deben exponer detalles internos.
+- Las suscripciones Push pertenecen a administradores autenticados; una falla al notificar nunca debe impedir que una consulta quede registrada.
 
 ## Datos y operaciones riesgosas
 
