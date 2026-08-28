@@ -47,6 +47,16 @@ async function sendToSubscriptions(subscriptions, payload) {
   return result;
 }
 
+function buildInquiryNotificationPayload(consulta) {
+  return {
+    title: 'Tenés una consulta por responder',
+    body: `${consulta.productoSnapshot.marca} ${consulta.productoSnapshot.modelo} · Nueva consulta`,
+    tag: `consulta-${consulta._id}`,
+    url: '/consultas',
+    data: { consultaId: consulta._id.toString() }
+  };
+}
+
 async function notifyAdminsNewInquiry(consulta) {
   if (!configureWebPush()) return { sent: 0, skipped: true };
 
@@ -54,13 +64,7 @@ async function notifyAdminsNewInquiry(consulta) {
   if (!admins.length) return { sent: 0 };
 
   const subscriptions = await PushSubscription.find({ usuario: { $in: admins.map(admin => admin._id) } });
-  const payload = {
-    title: 'Tenés una consulta por responder',
-    body: `${consulta.productoSnapshot.marca} ${consulta.productoSnapshot.modelo} · ${consulta.contacto.nombre}`,
-    tag: `consulta-${consulta._id}`,
-    url: '/consultas',
-    data: { consultaId: consulta._id.toString() }
-  };
+  const payload = buildInquiryNotificationPayload(consulta);
 
   return sendToSubscriptions(subscriptions, payload);
 }
@@ -76,4 +80,10 @@ async function sendTestNotification(usuarioId) {
   });
 }
 
-module.exports = { configureWebPush, getPushConfig, notifyAdminsNewInquiry, sendTestNotification };
+module.exports = {
+  buildInquiryNotificationPayload,
+  configureWebPush,
+  getPushConfig,
+  notifyAdminsNewInquiry,
+  sendTestNotification
+};

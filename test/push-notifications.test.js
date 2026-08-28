@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { getPushConfig } = require('../services/pushNotifications');
+const { buildInquiryNotificationPayload, getPushConfig } = require('../services/pushNotifications');
 
 test('Web Push queda deshabilitado si falta una variable VAPID', () => {
   const previous = {
@@ -68,4 +68,17 @@ test('Web Push normaliza espacios accidentales en variables VAPID', () => {
   else process.env.VAPID_PRIVATE_KEY = previous.privateKey;
   if (previous.subject === undefined) delete process.env.VAPID_SUBJECT;
   else process.env.VAPID_SUBJECT = previous.subject;
+});
+
+test('la notificación de consulta no expone datos personales del contacto', () => {
+  const payload = buildInquiryNotificationPayload({
+    _id: { toString: () => 'consulta-test' },
+    productoSnapshot: { marca: 'TCL', modelo: '435SK' },
+    contacto: { nombre: 'Nombre privado', telefono: '+5491112345678' }
+  });
+
+  assert.equal(payload.title, 'Tenés una consulta por responder');
+  assert.equal(payload.body, 'TCL 435SK · Nueva consulta');
+  assert.equal(payload.body.includes('Nombre privado'), false);
+  assert.equal(JSON.stringify(payload).includes('+5491112345678'), false);
 });
