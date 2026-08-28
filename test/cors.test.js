@@ -51,3 +51,9 @@ test('permite solicitudes sin Origin para clientes móviles', async () => {
   const options = createCorsOptions({ nodeEnv: 'production' });
   assert.deepEqual(await validateOrigin(options, undefined), { error: null, allowed: true });
 });
+
+test('autoriza el encabezado de idempotencia usado por las consultas públicas', () => {
+  const options = createCorsOptions({ nodeEnv: 'production' });
+
+  assert.ok(options.allowedHeaders.includes('X-Idempotency-Key'));
+});

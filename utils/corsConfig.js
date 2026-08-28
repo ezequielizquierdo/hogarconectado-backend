@@ -47,6 +47,7 @@ function createCorsOptions({
     allowedHeaders: [
       'Content-Type',
       'Authorization',
+      'X-Idempotency-Key',
       'X-Requested-With',
       'Accept',
       'Origin',

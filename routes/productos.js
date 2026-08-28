@@ -4,11 +4,12 @@ const { body, validationResult } = require('express-validator');
 const Producto = require('../models/Producto');
 const { getPricingConfig } = require('../utils/pricing');
 const Categoria = require('../models/Categoria');
-const { requireRoles } = require('../middleware/auth');
+const { authenticate, optionalAuthenticate, requireRoles } = require('../middleware/auth');
 const { deleteAssets } = require('../services/imageStorage');
+const { serializePublicProduct } = require('../utils/publicProduct');
 
 // GET /api/productos - Obtener todos los productos con filtros y paginación
-router.get('/', async (req, res) => {
+router.get('/', optionalAuthenticate, async (req, res) => {
   try {
     const {
       categoria,
@@ -94,7 +95,7 @@ router.get('/', async (req, res) => {
 
     res.json({
       success: true,
-      data: productos,
+      data: req.user ? productos : productos.map(serializePublicProduct),
       pagination: {
         pagina: paginaParsed,
         limite: limiteParsed,
@@ -125,7 +126,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/productos/:id - Obtener un producto por ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', optionalAuthenticate, async (req, res) => {
   try {
     const producto = await Producto.findById(req.params.id)
       .populate('categoria', 'nombre descripcion icono');
@@ -137,7 +138,11 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    // Agregar precios calculados
+    if (!req.user) {
+      return res.json({ success: true, data: serializePublicProduct(producto) });
+    }
+
+    // Agregar precios calculados para usuarios autenticados
     const precios = producto.calcularCuotas();
 
     res.json({
@@ -157,7 +162,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/productos - Crear nuevo producto
-router.post('/', requireRoles('editor', 'admin'), [
+router.post('/', authenticate, requireRoles('editor', 'admin'), [
   body('categoria')
     .isMongoId()
     .withMessage('ID de categoría inválido'),
@@ -233,7 +238,7 @@ router.post('/', requireRoles('editor', 'admin'), [
 });
 
 // PUT /api/productos/:id - Actualizar producto
-router.put('/:id', requireRoles('editor', 'admin'), [
+router.put('/:id', authenticate, requireRoles('editor', 'admin'), [
   body('categoria')
     .optional()
     .isMongoId()
@@ -297,7 +302,7 @@ router.put('/:id', requireRoles('editor', 'admin'), [
 });
 
 // DELETE /api/productos/:id - Eliminar producto (soft delete)
-router.delete('/:id', requireRoles('admin'), async (req, res) => {
+router.delete('/:id', authenticate, requireRoles('admin'), async (req, res) => {
   try {
     const producto = await Producto.findById(req.params.id);
 
@@ -328,7 +333,7 @@ router.delete('/:id', requireRoles('admin'), async (req, res) => {
 });
 
 // GET /api/productos/:id/cotizar - Obtener cotización de un producto
-router.get('/:id/cotizar', async (req, res) => {
+router.get('/:id/cotizar', authenticate, async (req, res) => {
   try {
     const producto = await Producto.findById(req.params.id)
       .populate('categoria', 'nombre');

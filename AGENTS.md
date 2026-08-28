@@ -60,9 +60,12 @@ No versionar `.env`, credenciales, cadenas de conexión ni secretos.
 
 ## Autenticación y seguridad
 
-- `/health`, la información raíz y el inicio de autenticación son públicos según la configuración de `server.js`; las rutas de negocio requieren JWT.
+- `/health`, la información raíz, el inicio de autenticación, la lectura sanitizada del catálogo y la creación de consultas comerciales son públicas según `server.js`; las operaciones internas requieren JWT.
+- Las respuestas públicas de productos no deben exponer precio base, porcentaje de ganancia, identificadores de almacenamiento ni metadatos internos.
+- Las consultas públicas deben validar y normalizar contacto, limitar frecuencia y conservar idempotencia para evitar doble envío.
 - Validar tokens de Google con `GOOGLE_CLIENT_ID` y emitir JWT únicamente desde el backend.
 - Aplicar autorización por rol en el backend, incluso si el frontend oculta controles.
+- El alta de consultas comerciales es pública; su listado, resumen y cambio de estado son exclusivos del rol `admin`.
 - Mantener validación de entrada, Helmet, CORS y rate limiting.
 - No registrar tokens, secretos, contraseñas ni cadenas de conexión.
 - Los mensajes de error de producción no deben exponer detalles internos.

@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { canAccessOwnedResource, requireRoles } = require('../middleware/auth');
+const { canAccessOwnedResource, optionalAuthenticate, requireRoles } = require('../middleware/auth');
 
 test('admin y editor acceden a recursos de otros usuarios', () => {
   assert.equal(canAccessOwnedResource('owner', { _id: 'other', rol: 'admin' }), true);
@@ -24,4 +24,14 @@ test('requireRoles permite y rechaza roles correctamente', () => {
   };
   requireRoles('admin')({ user: { rol: 'consulta' } }, response, () => {});
   assert.equal(response.statusCode, 403);
+});
+
+test('optionalAuthenticate permite continuar cuando no se envía una sesión', async () => {
+  let nextCalled = false;
+  const request = { get: () => undefined };
+
+  await optionalAuthenticate(request, {}, () => { nextCalled = true; });
+
+  assert.equal(nextCalled, true);
+  assert.equal(request.user, undefined);
 });

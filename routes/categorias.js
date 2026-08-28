@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const Categoria = require('../models/Categoria');
-const { requireRoles } = require('../middleware/auth');
+const { authenticate, requireRoles } = require('../middleware/auth');
 
 // Cache simple en memoria para categorías
 let categoriasCache = null;
@@ -69,7 +69,8 @@ function clearCache() {
 // GET /api/categorias/:id - Obtener una categoría por ID
 router.get('/:id', async (req, res) => {
   try {
-    const categoria = await Categoria.findById(req.params.id);
+    const categoria = await Categoria.findOne({ _id: req.params.id, activa: true })
+      .select('nombre descripcion icono');
     
     if (!categoria) {
       return res.status(404).json({
@@ -92,7 +93,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/categorias - Crear nueva categoría
-router.post('/', requireRoles('editor', 'admin'), [
+router.post('/', authenticate, requireRoles('editor', 'admin'), [
   body('nombre')
     .trim()
     .isLength({ min: 1, max: 100 })
@@ -154,7 +155,7 @@ router.post('/', requireRoles('editor', 'admin'), [
 });
 
 // PUT /api/categorias/:id - Actualizar categoría
-router.put('/:id', requireRoles('editor', 'admin'), [
+router.put('/:id', authenticate, requireRoles('editor', 'admin'), [
   body('nombre')
     .optional()
     .trim()
@@ -207,7 +208,7 @@ router.put('/:id', requireRoles('editor', 'admin'), [
 });
 
 // DELETE /api/categorias/:id - Eliminar categoría (soft delete)
-router.delete('/:id', requireRoles('admin'), async (req, res) => {
+router.delete('/:id', authenticate, requireRoles('admin'), async (req, res) => {
   try {
     const categoria = await Categoria.findByIdAndUpdate(
       req.params.id,

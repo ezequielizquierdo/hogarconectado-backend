@@ -47,6 +47,15 @@ async function authenticate(req, res, next) {
   }
 }
 
+async function optionalAuthenticate(req, res, next) {
+  const authorization = req.get('authorization') || '';
+  if (!authorization) {
+    return next();
+  }
+
+  return authenticate(req, res, next);
+}
+
 function requireRoles(...roles) {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.rol)) {
@@ -60,4 +69,4 @@ function canAccessOwnedResource(ownerId, usuario) {
   return usuario.rol === 'admin' || usuario.rol === 'editor' || ownerId?.toString() === usuario._id.toString();
 }
 
-module.exports = { authenticate, canAccessOwnedResource, requireRoles, signSession };
+module.exports = { authenticate, optionalAuthenticate, canAccessOwnedResource, requireRoles, signSession };
