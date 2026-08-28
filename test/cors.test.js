@@ -57,3 +57,9 @@ test('autoriza el encabezado de idempotencia usado por las consultas públicas',
 
   assert.ok(options.allowedHeaders.includes('X-Idempotency-Key'));
 });
+
+test('autoriza PATCH para actualizar el seguimiento de consultas', () => {
+  const options = createCorsOptions({ nodeEnv: 'production' });
+
+  assert.ok(options.methods.includes('PATCH'));
+});
