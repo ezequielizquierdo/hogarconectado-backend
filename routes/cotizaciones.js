@@ -124,7 +124,10 @@ router.get('/', async (req, res) => {
       Cotizacion.find(filtros)
         .populate('productos.producto', 'marca modelo categoria')
         .populate('creadaPor', 'nombre email')
-        .sort({ createdAt: -1 }).skip((pagina - 1) * limite).limit(limite),
+        // El historial usa los snapshots de la cotización. `lean()` evita que
+        // los virtuales de Producto intenten recalcular precios con una
+        // proyección que deliberadamente no incluye `precioBase`.
+        .sort({ createdAt: -1 }).skip((pagina - 1) * limite).limit(limite).lean(),
       Cotizacion.countDocuments(filtros)
     ]);
     res.json({ success: true, data, pagination: { pagina, limite, total, paginas: Math.ceil(total / limite) } });
@@ -138,7 +141,10 @@ router.get('/:id', async (req, res) => {
     const cotizacion = await findAuthorized(req, res);
     if (!cotizacion) return;
     await cotizacion.populate('productos.producto', 'marca modelo categoria descripcion');
-    res.json({ success: true, data: cotizacion });
+    res.json({
+      success: true,
+      data: cotizacion.toObject({ virtuals: false })
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error al obtener cotización' });
   }

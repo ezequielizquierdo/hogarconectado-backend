@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 const Cotizacion = require('../models/Cotizacion');
+const Producto = require('../models/Producto');
 
 function makeQuote(modalidadPago) {
   return new Cotizacion({
@@ -37,4 +38,16 @@ test('conserva el porcentaje aplicado junto al snapshot de precios', () => {
   const cotizacion = makeQuote('contado');
   assert.equal(cotizacion.productos[0].detalles.porcentajeAplicado, 30);
   assert.equal(cotizacion.productos[0].detalles.precios.contado, 130);
+});
+
+test('permite serializar proyecciones de producto sin ejecutar virtuales de precio', () => {
+  const productoProyectado = new Producto({
+    categoria: new mongoose.Types.ObjectId(),
+    marca: 'Marca',
+    modelo: 'Modelo'
+  });
+
+  assert.doesNotThrow(() => {
+    JSON.stringify(productoProyectado.toObject({ virtuals: false }));
+  });
 });
