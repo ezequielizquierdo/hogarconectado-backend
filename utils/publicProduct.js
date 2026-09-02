@@ -15,4 +15,15 @@ function serializePublicProduct(product) {
   };
 }
 
-module.exports = { serializePublicProduct };
+function serializeAuthenticatedProduct(product) {
+  const source = typeof product?.toObject === 'function'
+    ? product.toObject({ virtuals: true })
+    : product;
+  const prices = typeof product?.calcularCuotas === 'function'
+    ? product.calcularCuotas()
+    : source.precios;
+
+  return { ...source, precios: prices };
+}
+
+module.exports = { serializeAuthenticatedProduct, serializePublicProduct };

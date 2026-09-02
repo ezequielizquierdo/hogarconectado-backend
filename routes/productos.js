@@ -6,7 +6,7 @@ const { getPricingConfig } = require('../utils/pricing');
 const Categoria = require('../models/Categoria');
 const { authenticate, optionalAuthenticate, requireRoles } = require('../middleware/auth');
 const { deleteAssets } = require('../services/imageStorage');
-const { serializePublicProduct } = require('../utils/publicProduct');
+const { serializeAuthenticatedProduct, serializePublicProduct } = require('../utils/publicProduct');
 
 // GET /api/productos - Obtener todos los productos con filtros y paginación
 router.get('/', optionalAuthenticate, async (req, res) => {
@@ -95,7 +95,9 @@ router.get('/', optionalAuthenticate, async (req, res) => {
 
     res.json({
       success: true,
-      data: req.user ? productos : productos.map(serializePublicProduct),
+      data: req.user
+        ? productos.map(serializeAuthenticatedProduct)
+        : productos.map(serializePublicProduct),
       pagination: {
         pagina: paginaParsed,
         limite: limiteParsed,
