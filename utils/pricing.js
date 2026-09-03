@@ -47,16 +47,29 @@ function calculatePrices(precioBase, config = DEFAULT_PRICING) {
   }
 
   const contado = base * (1 + config.ganancia);
+  const factorFactura = parseNonNegativeNumber(
+    config.factorFactura,
+    DEFAULT_PRICING.factorFactura
+  );
+  const costoFacturado = base * factorFactura;
+  const costo3 = base * config.factor3Cuotas;
+  const costo6 = base * config.factor6Cuotas;
   const total3 = contado * config.factor3Cuotas;
   const total6 = contado * config.factor6Cuotas;
 
   return {
     contado,
+    factura: {
+      costoBase: costoFacturado,
+      unPago: costoFacturado * (1 + config.ganancia)
+    },
     tresCuotas: {
+      costoBase: costo3,
       total: total3,
       cuota: total3 / 3
     },
     seisCuotas: {
+      costoBase: costo6,
       total: total6,
       cuota: total6 / 6
     }
@@ -66,21 +79,13 @@ function calculatePrices(precioBase, config = DEFAULT_PRICING) {
 function calculateDetailedPrices(precioBase, config = DEFAULT_PRICING) {
   const prices = calculatePrices(precioBase, config);
   const base = Number(precioBase);
-  const factorFactura = parseNonNegativeNumber(
-    config.factorFactura,
-    DEFAULT_PRICING.factorFactura
-  );
-  const costoFacturado = base * factorFactura;
 
   return {
     precioBase: base,
     porcentaje: config.ganancia * 100,
     ganancia: base * config.ganancia,
     efectivo: prices.contado,
-    factura: {
-      costoBase: costoFacturado,
-      unPago: costoFacturado * (1 + config.ganancia)
-    },
+    factura: prices.factura,
     tresCuotas: prices.tresCuotas,
     seisCuotas: prices.seisCuotas
   };

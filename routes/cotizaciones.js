@@ -14,7 +14,7 @@ const validators = [
   body('productos.*.producto').isMongoId(),
   body('productos.*.cantidad').isInt({ min: 1 }),
   body('productos.*.porcentajeAplicado').optional().isFloat({ min: 0, max: 100 }),
-  body('modalidadPago').optional().isIn(['contado', '3-cuotas', '6-cuotas'])
+  body('modalidadPago').optional().isIn(['contado', 'facturado', '3-cuotas', '6-cuotas'])
 ];
 
 async function findAuthorized(req, res) {
@@ -124,6 +124,7 @@ router.get('/', async (req, res) => {
       Cotizacion.find(filtros)
         .populate('productos.producto', 'marca modelo categoria')
         .populate('creadaPor', 'nombre email')
+        .populate('confirmadaPor', 'nombre email')
         // El historial usa los snapshots de la cotización. `lean()` evita que
         // los virtuales de Producto intenten recalcular precios con una
         // proyección que deliberadamente no incluye `precioBase`.
@@ -141,6 +142,7 @@ router.get('/:id', async (req, res) => {
     const cotizacion = await findAuthorized(req, res);
     if (!cotizacion) return;
     await cotizacion.populate('productos.producto', 'marca modelo categoria descripcion');
+    await cotizacion.populate('confirmadaPor', 'nombre email');
     res.json({
       success: true,
       data: cotizacion.toObject({ virtuals: false })
@@ -157,7 +159,13 @@ router.put('/:id/estado', [body('estado').isIn(['pendiente', 'enviada', 'confirm
     const cotizacion = await findAuthorized(req, res);
     if (!cotizacion) return;
     cotizacion.estado = req.body.estado;
+    if (req.body.estado === 'confirmada') {
+      cotizacion.confirmadaPor = req.user._id;
+      cotizacion.confirmadaAt = new Date();
+      cotizacion.calcularResumenConfirmacion();
+    }
     await cotizacion.save();
+    await cotizacion.populate('confirmadaPor', 'nombre email');
     res.json({ success: true, data: cotizacion, message: 'Estado actualizado exitosamente' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error al actualizar estado' });

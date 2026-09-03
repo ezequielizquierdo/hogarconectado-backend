@@ -52,7 +52,8 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Middlewares para parsing
-app.use(express.json({ limit: '10mb' }));
+// Una imagen de 8 MB crece cerca de un 33% al viajar como Base64.
+app.use(express.json({ limit: '12mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Servir archivos estáticos (imágenes) OPTIMIZADO
@@ -131,6 +132,7 @@ const authRoutes = require('./routes/auth');
 const usuariosRoutes = require('./routes/usuarios');
 const consultasRoutes = require('./routes/consultas');
 const pushRoutes = require('./routes/push');
+const productAssistantRoutes = require('./routes/productAssistant');
 const { authenticate } = require('./middleware/auth');
 
 const authLimiter = rateLimit({
@@ -149,6 +151,7 @@ app.use('/api/productos', productosRoutes);
 app.use('/api/cotizaciones', authenticate, cotizacionesRoutes);
 app.use('/api/precios', authenticate, preciosRoutes);
 app.use('/api/upload', authenticate, uploadRoutes);
+app.use('/api/product-assistant', authenticate, productAssistantRoutes);
 app.use('/api/usuarios', authenticate, usuariosRoutes);
 
 // Middleware de manejo de errores

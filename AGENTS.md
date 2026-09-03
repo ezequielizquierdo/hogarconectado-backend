@@ -46,6 +46,7 @@ Variables principales, sin documentar aquí sus valores reales:
 - `INITIAL_ADMIN_EMAIL`
 - `CLOUDINARY_URL`, o las variables separadas de Cloudinary
 - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` para Web Push
+- `GEMINI_API_KEY` y, opcionalmente, `GEMINI_MODEL` para el alta asistida desde imágenes
 
 No versionar `.env`, credenciales, cadenas de conexión ni secretos.
 
@@ -56,6 +57,7 @@ No versionar `.env`, credenciales, cadenas de conexión ni secretos.
 - `/api/precios/calcular` expone cálculos con porcentajes dinámicos.
 - Los precios de productos deben obtenerse mediante las funciones compartidas de `utils/pricing.js`.
 - Las imágenes persistentes se gestionan a través de `services/imageStorage.js` y Cloudinary.
+- El análisis de imágenes genera borradores revisables; nunca debe crear productos automáticamente.
 - MongoDB almacena referencias y metadatos de imágenes, no archivos temporales del filesystem de Render.
 - Mantener snapshots de cotizaciones coherentes con los datos y precios utilizados al crearlas.
 

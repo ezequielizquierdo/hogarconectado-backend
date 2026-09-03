@@ -23,6 +23,7 @@ debug.log
 # Archivos temporales de scripts
 temp/
 tmp/
+backups/
 
 # Runtime data
 pids

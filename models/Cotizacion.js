@@ -2,9 +2,32 @@ const mongoose = require('mongoose');
 
 const preciosSnapshotSchema = new mongoose.Schema({
   contado: Number,
-  tresCuotas: { total: Number, cuota: Number },
-  seisCuotas: { total: Number, cuota: Number }
+  factura: { costoBase: Number, unPago: Number },
+  tresCuotas: { costoBase: Number, total: Number, cuota: Number },
+  seisCuotas: { costoBase: Number, total: Number, cuota: Number }
 }, { _id: false });
+
+function getSelectedUnitPrice(item, modalidadPago) {
+  const precios = item.detalles.precios;
+  if (modalidadPago === 'facturado') return precios.factura.unPago;
+  if (modalidadPago === '3-cuotas') return precios.tresCuotas.total;
+  if (modalidadPago === '6-cuotas') return precios.seisCuotas.total;
+  return precios.contado;
+}
+
+function getSettlementUnitCost(item, modalidadPago) {
+  const precios = item.detalles.precios;
+  if (modalidadPago === 'facturado') return precios.factura.costoBase;
+  if (modalidadPago === '3-cuotas') {
+    return precios.tresCuotas.costoBase
+      ?? item.detalles.precioBase * (precios.tresCuotas.total / precios.contado);
+  }
+  if (modalidadPago === '6-cuotas') {
+    return precios.seisCuotas.costoBase
+      ?? item.detalles.precioBase * (precios.seisCuotas.total / precios.contado);
+  }
+  return item.detalles.precioBase;
+}
 
 const cotizacionSchema = new mongoose.Schema({
   datosContacto: {
@@ -26,7 +49,7 @@ const cotizacionSchema = new mongoose.Schema({
   }],
   modalidadPago: {
     type: String,
-    enum: ['contado', '3-cuotas', '6-cuotas'],
+    enum: ['contado', 'facturado', '3-cuotas', '6-cuotas'],
     default: 'contado'
   },
   totales: {
@@ -38,6 +61,13 @@ const cotizacionSchema = new mongoose.Schema({
     enum: ['pendiente', 'enviada', 'confirmada', 'cancelada'],
     default: 'pendiente'
   },
+  confirmadaPor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
+  confirmadaAt: Date,
+  resumenConfirmacion: {
+    totalVendido: Number,
+    dineroARendir: Number,
+    gananciaVendedor: Number
+  },
   observaciones: String,
   creadaPor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true }
 }, { timestamps: true });
@@ -46,27 +76,45 @@ cotizacionSchema.index({ creadaPor: 1, createdAt: -1 });
 cotizacionSchema.index({ estado: 1, createdAt: -1 });
 
 cotizacionSchema.methods.calcularTotales = function() {
-  const key = this.modalidadPago === '3-cuotas'
-    ? ['tresCuotas', 'total']
-    : this.modalidadPago === '6-cuotas'
-      ? ['seisCuotas', 'total']
-      : ['contado'];
-
   this.totales.subtotal = this.productos.reduce((total, item) => {
-    const precios = item.detalles.precios;
-    const precio = key.length === 1 ? precios[key[0]] : precios[key[0]][key[1]];
-    return total + precio * item.cantidad;
+    return total + getSelectedUnitPrice(item, this.modalidadPago) * item.cantidad;
   }, 0);
   this.totales.total = this.totales.subtotal;
   return this.totales;
 };
 
-cotizacionSchema.methods.generarMensajeWhatsApp = function() {
-  const detalle = this.productos.map(item => (
-    `• ${item.detalles.marca} ${item.detalles.modelo} x${item.cantidad}`
-  )).join('\n');
+cotizacionSchema.methods.calcularResumenConfirmacion = function() {
+  const dineroARendir = this.productos.reduce((total, item) => {
+    return total + getSettlementUnitCost(item, this.modalidadPago) * item.cantidad;
+  }, 0);
+  const totalVendido = this.totales.total;
+  this.resumenConfirmacion = {
+    totalVendido,
+    dineroARendir,
+    gananciaVendedor: totalVendido - dineroARendir
+  };
+  return this.resumenConfirmacion;
+};
 
-  return `🏠 *Hogar Conectado*\n\n*Cotización para ${this.datosContacto.nombre}*\n${detalle}\n\n💰 Total: $${this.totales.total.toLocaleString('es-AR')}\nModalidad: ${this.modalidadPago}\n\n${this.observaciones || ''}`.trim();
+cotizacionSchema.methods.generarMensajeWhatsApp = function() {
+  const detalle = this.productos.map(item => {
+    const subtotal = getSelectedUnitPrice(item, this.modalidadPago) * item.cantidad;
+    return `• ${item.detalles.marca} ${item.detalles.modelo} x${item.cantidad}: $${subtotal.toLocaleString('es-AR')}`;
+  }).join('\n');
+
+  const modalidad = {
+    contado: 'Contado',
+    facturado: 'Facturado en 1 cuota con ganancia',
+    '3-cuotas': '3 cuotas',
+    '6-cuotas': '6 cuotas'
+  }[this.modalidadPago] || this.modalidadPago;
+  const cuotas = this.modalidadPago === '3-cuotas'
+    ? `\n3 cuotas de $${(this.totales.total / 3).toLocaleString('es-AR')}`
+    : this.modalidadPago === '6-cuotas'
+      ? `\n6 cuotas de $${(this.totales.total / 6).toLocaleString('es-AR')}`
+      : '';
+
+  return `🏠 *Hogar Conectado*\n\n*Cotización para ${this.datosContacto.nombre}*\n${detalle}\n\n💰 Total: $${this.totales.total.toLocaleString('es-AR')}${cuotas}\nModalidad: ${modalidad}\n\n${this.observaciones || ''}`.trim();
 };
 
 module.exports = mongoose.model('Cotizacion', cotizacionSchema);

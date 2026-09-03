@@ -11,6 +11,8 @@
     "analyze-excel": "node data/analizar-excel.js",
     "verify-db": "node scripts/verificar-bd.js",
     "manage-categories": "node scripts/gestionar-categorias.js",
+    "validate-essen-catalog": "node scripts/validar-catalogo-essen.js",
+    "import-essen-catalog": "node scripts/importar-catalogo-essen.js",
     "build": "echo 'Build completed successfully'",
     "test": "node --test"
   },

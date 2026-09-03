@@ -35,9 +35,13 @@ test('calcula contado, totales y valores por cuota', () => {
   });
 
   assertClose(prices.contado, 775500);
+  assertClose(prices.factura.costoBase, 740250);
+  assertClose(prices.factura.unPago, 814275);
   assertClose(prices.tresCuotas.total, 876159.9);
+  assertClose(prices.tresCuotas.costoBase, 796509);
   assertClose(prices.tresCuotas.cuota, 292053.3);
   assertClose(prices.seisCuotas.total, 941301.9);
+  assertClose(prices.seisCuotas.costoBase, 855729);
   assertClose(prices.seisCuotas.cuota, 156883.65);
 });
 
