@@ -82,3 +82,17 @@ test('la notificación de consulta no expone datos personales del contacto', () 
   assert.equal(payload.body.includes('Nombre privado'), false);
   assert.equal(JSON.stringify(payload).includes('+5491112345678'), false);
 });
+
+test('la notificación resume una consulta con varios productos', () => {
+  const payload = buildInquiryNotificationPayload({
+    _id: { toString: () => 'consulta-multiple' },
+    productoSnapshot: { marca: 'TCL', modelo: '435SK' },
+    productos: [
+      { productoSnapshot: { marca: 'TCL', modelo: '435SK' } },
+      { productoSnapshot: { marca: 'LG', modelo: 'GS66SP' } },
+      { productoSnapshot: { marca: 'Oster', modelo: 'X1' } }
+    ]
+  });
+
+  assert.equal(payload.body, 'TCL 435SK y 2 más · Nueva consulta');
+});

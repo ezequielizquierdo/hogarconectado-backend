@@ -14,6 +14,17 @@ const consultaSchema = new mongoose.Schema({
     imagen: String,
     precioContado: Number
   },
+  productos: [{
+    producto: { type: mongoose.Schema.Types.ObjectId, ref: 'Producto', required: true },
+    productoSnapshot: {
+      categoria: String,
+      marca: { type: String, required: true },
+      modelo: { type: String, required: true },
+      descripcion: String,
+      imagen: String,
+      precioContado: Number
+    }
+  }],
   contacto: {
     nombre: { type: String, required: true, trim: true, maxlength: 100 },
     telefono: { type: String, required: true, maxlength: 20 }

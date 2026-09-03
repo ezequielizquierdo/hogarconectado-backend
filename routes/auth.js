@@ -26,14 +26,18 @@ router.post('/google', [
       usuario = await Usuario.create({
         ...identidad,
         rol: esAdminInicial ? 'admin' : 'consulta',
-        estado: esAdminInicial ? 'activo' : 'pendiente',
-        aprobadoEn: esAdminInicial ? new Date() : undefined
+        estado: 'activo',
+        aprobadoEn: new Date()
       });
     } else {
       usuario.googleId = identidad.googleId;
       usuario.email = identidad.email;
       usuario.nombre = identidad.nombre;
       usuario.foto = identidad.foto;
+      if (usuario.rol === 'consulta' && usuario.estado === 'pendiente') {
+        usuario.estado = 'activo';
+        usuario.aprobadoEn = new Date();
+      }
       await usuario.save();
     }
 

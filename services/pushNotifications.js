@@ -48,9 +48,11 @@ async function sendToSubscriptions(subscriptions, payload) {
 }
 
 function buildInquiryNotificationPayload(consulta) {
+  const first = consulta.productos?.[0]?.productoSnapshot || consulta.productoSnapshot;
+  const extraCount = Math.max(0, (consulta.productos?.length || 1) - 1);
   return {
     title: 'Tenés una consulta por responder',
-    body: `${consulta.productoSnapshot.marca} ${consulta.productoSnapshot.modelo} · Nueva consulta`,
+    body: `${first.marca} ${first.modelo}${extraCount ? ` y ${extraCount} más` : ''} · Nueva consulta`,
     tag: `consulta-${consulta._id}`,
     url: '/consultas',
     data: { consultaId: consulta._id.toString() }

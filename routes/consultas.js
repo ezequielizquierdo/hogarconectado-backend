@@ -20,7 +20,13 @@ const publicInquiryLimiter = rateLimit({
 
 const createValidators = [
   header('x-idempotency-key').trim().isLength({ min: 12, max: 100 }),
-  body('productoId').isMongoId(),
+  body().custom(value => {
+    const ids = Array.isArray(value.productoIds) ? value.productoIds : [value.productoId].filter(Boolean);
+    if (!ids.length || ids.length > 10 || ids.some(id => !require('mongoose').isValidObjectId(id))) {
+      throw new Error('Productos inválidos');
+    }
+    return true;
+  }),
   body('nombre').customSanitizer(normalizeContactName).isLength({ min: 2, max: 100 }),
   body('telefono').customSanitizer(normalizePhone).custom(isValidPhone),
   body('website').optional({ values: 'falsy' }).isEmpty()
@@ -46,13 +52,19 @@ router.post('/', publicInquiryLimiter, createValidators, async (req, res) => {
       });
     }
 
-    const producto = await Producto.findOne({ _id: req.body.productoId, activo: true })
+    const requestedIds = [...new Set(
+      (Array.isArray(req.body.productoIds) ? req.body.productoIds : [req.body.productoId])
+        .map(String)
+    )];
+    const productos = await Producto.find({ _id: { $in: requestedIds }, activo: true })
       .populate('categoria', 'nombre');
-    if (!producto) {
-      return res.status(404).json({ success: false, message: 'El producto ya no está disponible' });
+    if (productos.length !== requestedIds.length) {
+      return res.status(404).json({ success: false, message: 'Uno de los productos ya no está disponible' });
     }
 
-    const consulta = await Consulta.create({
+    const productsById = new Map(productos.map(producto => [producto._id.toString(), producto]));
+    const orderedProducts = requestedIds.map(id => productsById.get(id));
+    const snapshots = orderedProducts.map(producto => ({
       producto: producto._id,
       productoSnapshot: {
         categoria: producto.categoria?.nombre,
@@ -61,7 +73,14 @@ router.post('/', publicInquiryLimiter, createValidators, async (req, res) => {
         descripcion: producto.descripcion,
         imagen: producto.imagenes?.[0],
         precioContado: producto.precioConGanancia
-      },
+      }
+    }));
+    const firstProduct = snapshots[0];
+
+    const consulta = await Consulta.create({
+      producto: firstProduct.producto,
+      productoSnapshot: firstProduct.productoSnapshot,
+      productos: snapshots,
       contacto: {
         nombre: req.body.nombre,
         telefono: req.body.telefono
