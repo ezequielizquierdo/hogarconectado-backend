@@ -1,4 +1,4 @@
-const DEFAULT_MODEL = 'gemini-2.5-flash-lite';
+const DEFAULT_MODEL = 'gemini-3.5-flash-lite';
 
 const PRODUCT_SCHEMA = {
   type: 'OBJECT',
