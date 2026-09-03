@@ -50,7 +50,8 @@ test('calcula dinero a rendir y ganancia según la modalidad confirmada', () => 
   assert.deepEqual(contado.calcularResumenConfirmacion().toObject(), {
     totalVendido: 260,
     dineroARendir: 200,
-    gananciaVendedor: 60
+    gananciaVendedor: 60,
+    participacionHogarConectado: 0
   });
 
   const facturado = makeQuote('facturado');
@@ -58,7 +59,8 @@ test('calcula dinero a rendir y ganancia según la modalidad confirmada', () => 
   assert.deepEqual(facturado.calcularResumenConfirmacion().toObject(), {
     totalVendido: 273,
     dineroARendir: 210,
-    gananciaVendedor: 63
+    gananciaVendedor: 63,
+    participacionHogarConectado: 0
   });
 
   const tres = makeQuote('3-cuotas');
@@ -66,7 +68,8 @@ test('calcula dinero a rendir y ganancia según la modalidad confirmada', () => 
   assert.deepEqual(tres.calcularResumenConfirmacion().toObject(), {
     totalVendido: 300,
     dineroARendir: 240,
-    gananciaVendedor: 60
+    gananciaVendedor: 60,
+    participacionHogarConectado: 0
   });
 
   const seis = makeQuote('6-cuotas');
@@ -74,7 +77,38 @@ test('calcula dinero a rendir y ganancia según la modalidad confirmada', () => 
   assert.deepEqual(seis.calcularResumenConfirmacion().toObject(), {
     totalVendido: 360,
     dineroARendir: 280,
-    gananciaVendedor: 80
+    gananciaVendedor: 80,
+    participacionHogarConectado: 0
+  });
+});
+
+test('divide el margen con un vendedor y suma el envío íntegro al dinero a rendir', () => {
+  const cotizacion = makeQuote('contado');
+  cotizacion.tipoLiquidacion = 'vendedor-50-margen';
+  cotizacion.venta = { agregarEnvio: true, costoEnvio: 20 };
+  cotizacion.calcularTotales();
+
+  assert.deepEqual(cotizacion.calcularResumenConfirmacion().toObject(), {
+    totalVendido: 280,
+    dineroARendir: 250,
+    gananciaVendedor: 30,
+    participacionHogarConectado: 30
+  });
+});
+
+test('liquida el ejemplo comercial de 371000 vendido a 430000', () => {
+  const cotizacion = makeQuote('contado');
+  cotizacion.tipoLiquidacion = 'vendedor-50-margen';
+  cotizacion.productos[0].cantidad = 1;
+  cotizacion.productos[0].detalles.precioBase = 371000;
+  cotizacion.productos[0].detalles.precios.contado = 430000;
+  cotizacion.calcularTotales();
+
+  assert.deepEqual(cotizacion.calcularResumenConfirmacion().toObject(), {
+    totalVendido: 430000,
+    dineroARendir: 400500,
+    gananciaVendedor: 29500,
+    participacionHogarConectado: 29500
   });
 });
 

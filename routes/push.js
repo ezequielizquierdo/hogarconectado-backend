@@ -6,7 +6,7 @@ const { configureWebPush, sendTestNotification } = require('../services/pushNoti
 
 const router = express.Router();
 const asyncHandler = handler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
-router.use(authenticate, requireRoles('admin'));
+router.use(authenticate, requireRoles('admin', 'vendedor'));
 
 router.get('/public-key', (_req, res) => {
   let config;

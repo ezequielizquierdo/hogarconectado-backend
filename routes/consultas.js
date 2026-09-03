@@ -109,12 +109,15 @@ router.post('/', publicInquiryLimiter, createValidators, async (req, res) => {
   }
 });
 
-router.use(authenticate, requireRoles('admin'));
+router.use(authenticate, requireRoles('admin', 'vendedor'));
 
 router.get('/resumen', asyncHandler(async (_req, res) => {
+  const ownershipFilter = _req.user.rol === 'vendedor'
+    ? { $or: [{ asignadaA: _req.user._id }, { asignadaA: { $exists: false } }, { asignadaA: null }] }
+    : {};
   const [nuevas, totalAbiertas] = await Promise.all([
-    Consulta.countDocuments({ estado: 'nueva' }),
-    Consulta.countDocuments({ estado: { $in: ['nueva', 'en-gestion'] } })
+    Consulta.countDocuments({ ...ownershipFilter, estado: 'nueva' }),
+    Consulta.countDocuments({ ...ownershipFilter, estado: { $in: ['nueva', 'en-gestion'] } })
   ]);
 
   res.json({ success: true, data: { nuevas, totalAbiertas } });
@@ -124,6 +127,9 @@ router.get('/', asyncHandler(async (req, res) => {
   const pagina = Math.max(1, Number.parseInt(req.query.pagina, 10) || 1);
   const limite = Math.min(100, Math.max(1, Number.parseInt(req.query.limite, 10) || 30));
   const filtros = {};
+  if (req.user.rol === 'vendedor') {
+    filtros.$or = [{ asignadaA: req.user._id }, { asignadaA: { $exists: false } }, { asignadaA: null }];
+  }
 
   if (req.query.estado) {
     if (!CONSULTA_ESTADOS.includes(req.query.estado)) {
@@ -163,7 +169,7 @@ router.patch('/:id/estado', [
     return res.status(404).json({ success: false, message: 'Consulta no encontrada' });
   }
 
-  if (consulta.asignadaA && consulta.asignadaA.toString() !== req.user._id.toString()) {
+  if (req.user.rol !== 'admin' && consulta.asignadaA && consulta.asignadaA.toString() !== req.user._id.toString()) {
     return res.status(409).json({
       success: false,
       message: 'Otro administrador ya está gestionando esta consulta'
@@ -171,6 +177,9 @@ router.patch('/:id/estado', [
   }
 
   const estado = req.body.estado;
+  if (req.user.rol === 'vendedor' && !consulta.asignadaA && estado !== 'nueva') {
+    consulta.asignadaA = req.user._id;
+  }
   Object.assign(consulta, buildConsultaStateUpdate({
     estado,
     consulta,

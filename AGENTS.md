@@ -68,6 +68,8 @@ No versionar `.env`, credenciales, cadenas de conexión ni secretos.
 - Las consultas públicas deben validar y normalizar contacto, limitar frecuencia y conservar idempotencia para evitar doble envío.
 - Validar tokens de Google con `GOOGLE_CLIENT_ID` y emitir JWT únicamente desde el backend.
 - Aplicar autorización por rol en el backend, incluso si el frontend oculta controles.
+- El rol `vendedor` puede leer precios de venta sin precio base ni costos internos, gestionar únicamente sus cotizaciones, atender consultas disponibles o asignadas y recibir notificaciones; no puede mutar productos, categorías, marcas ni usuarios.
+- Las ventas creadas por vendedores dividen el margen comercial en partes iguales. El envío se reintegra íntegro, no genera comisión y el backend congela la liquidación al confirmar.
 - El alta de consultas comerciales es pública; su listado, resumen y cambio de estado son exclusivos del rol `admin`.
 - Mantener validación de entrada, Helmet, CORS y rate limiting.
 - No registrar tokens, secretos, contraseñas ni cadenas de conexión.

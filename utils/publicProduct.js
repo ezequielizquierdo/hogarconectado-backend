@@ -26,4 +26,21 @@ function serializeAuthenticatedProduct(product) {
   return { ...source, precios: prices };
 }
 
-module.exports = { serializeAuthenticatedProduct, serializePublicProduct };
+function serializeSellerProduct(product) {
+  const source = serializePublicProduct(product);
+  const prices = typeof product?.calcularCuotas === 'function'
+    ? product.calcularCuotas()
+    : product?.precios;
+  if (!prices) return source;
+  return {
+    ...source,
+    precios: {
+      contado: prices.contado,
+      factura: { unPago: prices.factura?.unPago },
+      tresCuotas: { total: prices.tresCuotas?.total, cuota: prices.tresCuotas?.cuota },
+      seisCuotas: { total: prices.seisCuotas?.total, cuota: prices.seisCuotas?.cuota }
+    }
+  };
+}
+
+module.exports = { serializeAuthenticatedProduct, serializePublicProduct, serializeSellerProduct };

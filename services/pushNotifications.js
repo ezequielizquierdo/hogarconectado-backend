@@ -62,7 +62,7 @@ function buildInquiryNotificationPayload(consulta) {
 async function notifyAdminsNewInquiry(consulta) {
   if (!configureWebPush()) return { sent: 0, skipped: true };
 
-  const admins = await Usuario.find({ rol: 'admin', estado: 'activo' }).select('_id').lean();
+  const admins = await Usuario.find({ rol: { $in: ['admin', 'vendedor'] }, estado: 'activo' }).select('_id').lean();
   if (!admins.length) return { sent: 0 };
 
   const subscriptions = await PushSubscription.find({ usuario: { $in: admins.map(admin => admin._id) } });

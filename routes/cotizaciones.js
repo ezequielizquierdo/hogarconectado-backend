@@ -3,9 +3,34 @@ const { body, validationResult } = require('express-validator');
 const Cotizacion = require('../models/Cotizacion');
 const Producto = require('../models/Producto');
 const { canAccessOwnedResource, requireRoles } = require('../middleware/auth');
-const { calculatePrices, getPricingConfig } = require('../utils/pricing');
+const { calculatePrices, getProductPricingConfig } = require('../utils/pricing');
 
 const router = express.Router();
+
+function serializeForUser(cotizacion, user) {
+  const source = typeof cotizacion.toObject === 'function'
+    ? cotizacion.toObject({ virtuals: false })
+    : structuredClone(cotizacion);
+  if (user.rol !== 'vendedor') return source;
+  source.productos = source.productos.map(item => {
+    const precios = item.detalles?.precios || {};
+    return {
+      ...item,
+      detalles: {
+        categoria: item.detalles?.categoria,
+        marca: item.detalles?.marca,
+        modelo: item.detalles?.modelo,
+        precios: {
+          contado: precios.contado,
+          factura: { unPago: precios.factura?.unPago },
+          tresCuotas: { total: precios.tresCuotas?.total, cuota: precios.tresCuotas?.cuota },
+          seisCuotas: { total: precios.seisCuotas?.total, cuota: precios.seisCuotas?.cuota }
+        }
+      }
+    };
+  });
+  return source;
+}
 
 const validators = [
   body('datosContacto.nombre').trim().isLength({ min: 2, max: 100 }),
@@ -50,10 +75,11 @@ router.post('/', validators, async (req, res) => {
       modalidadPago: modalidadPago || 'contado',
       observaciones,
       creadaPor: req.user._id,
+      tipoLiquidacion: req.user.rol === 'vendedor' ? 'vendedor-50-margen' : 'operacion-interna',
       productos: productos.map(item => {
         const producto = encontrados.find(found => found._id.toString() === item.producto);
-        const config = getPricingConfig(process.env);
-        const porcentajeAplicado = item.porcentajeAplicado ?? config.ganancia * 100;
+        const config = getProductPricingConfig(producto.porcentajeGanancia, process.env);
+        const porcentajeAplicado = config.ganancia * 100;
         const precios = calculatePrices(producto.precioBase, {
           ...config,
           ganancia: porcentajeAplicado / 100
@@ -74,13 +100,13 @@ router.post('/', validators, async (req, res) => {
     });
     cotizacion.calcularTotales();
     await cotizacion.save();
-    res.status(201).json({ success: true, message: 'Cotización creada exitosamente', data: cotizacion });
+    res.status(201).json({ success: true, message: 'Cotización creada exitosamente', data: serializeForUser(cotizacion, req.user) });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error al crear cotización' });
   }
 });
 
-router.get('/estadisticas/resumen', requireRoles('editor', 'admin'), async (req, res) => {
+router.get('/estadisticas/resumen', requireRoles('editor', 'admin', 'vendedor'), async (req, res) => {
   try {
     const hoy = new Date();
     const inicioDia = new Date(hoy); inicioDia.setHours(0, 0, 0, 0);
@@ -106,7 +132,7 @@ router.get('/', async (req, res) => {
   try {
     const limite = Math.max(1, Math.min(Number.parseInt(req.query.limite) || 20, 100));
     const pagina = Math.max(1, Number.parseInt(req.query.pagina) || 1);
-    const filtros = req.user.rol === 'consulta' ? { creadaPor: req.user._id } : {};
+    const filtros = ['consulta', 'vendedor'].includes(req.user.rol) ? { creadaPor: req.user._id } : {};
     if (req.query.estado && req.query.estado !== 'todas') filtros.estado = req.query.estado;
     if (req.query.fechaDesde || req.query.fechaHasta) {
       filtros.createdAt = {};
@@ -131,7 +157,7 @@ router.get('/', async (req, res) => {
         .sort({ createdAt: -1 }).skip((pagina - 1) * limite).limit(limite).lean(),
       Cotizacion.countDocuments(filtros)
     ]);
-    res.json({ success: true, data, pagination: { pagina, limite, total, paginas: Math.ceil(total / limite) } });
+    res.json({ success: true, data: data.map(item => serializeForUser(item, req.user)), pagination: { pagina, limite, total, paginas: Math.ceil(total / limite) } });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error al obtener cotizaciones' });
   }
@@ -145,14 +171,20 @@ router.get('/:id', async (req, res) => {
     await cotizacion.populate('confirmadaPor', 'nombre email');
     res.json({
       success: true,
-      data: cotizacion.toObject({ virtuals: false })
+      data: serializeForUser(cotizacion, req.user)
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error al obtener cotización' });
   }
 });
 
-router.put('/:id/estado', [body('estado').isIn(['pendiente', 'enviada', 'confirmada', 'cancelada'])], async (req, res) => {
+router.put('/:id/estado', [
+  body('estado').isIn(['pendiente', 'enviada', 'confirmada', 'cancelada']),
+  body('compradorNombre').if(body('estado').equals('confirmada')).trim().isLength({ min: 2, max: 100 }),
+  body('entregaAcordada').if(body('estado').equals('confirmada')).trim().isLength({ min: 3, max: 500 }),
+  body('agregarEnvio').if(body('estado').equals('confirmada')).isBoolean(),
+  body('costoEnvio').optional().isFloat({ min: 0 })
+], async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
@@ -162,14 +194,37 @@ router.put('/:id/estado', [body('estado').isIn(['pendiente', 'enviada', 'confirm
     if (req.body.estado === 'confirmada') {
       cotizacion.confirmadaPor = req.user._id;
       cotizacion.confirmadaAt = new Date();
+      cotizacion.venta = {
+        compradorNombre: req.body.compradorNombre,
+        entregaAcordada: req.body.entregaAcordada,
+        agregarEnvio: req.body.agregarEnvio,
+        costoEnvio: req.body.agregarEnvio ? Number(req.body.costoEnvio || 0) : 0,
+        estadoPago: 'pendiente',
+        estadoEntrega: 'pendiente'
+      };
       cotizacion.calcularResumenConfirmacion();
     }
     await cotizacion.save();
     await cotizacion.populate('confirmadaPor', 'nombre email');
-    res.json({ success: true, data: cotizacion, message: 'Estado actualizado exitosamente' });
+    res.json({ success: true, data: serializeForUser(cotizacion, req.user), message: 'Estado actualizado exitosamente' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error al actualizar estado' });
   }
+});
+
+router.patch('/:id/venta', requireRoles('admin'), [
+  body('estadoPago').optional().isIn(['pendiente', 'parcial', 'confirmado']),
+  body('estadoEntrega').optional().isIn(['pendiente', 'coordinada', 'entregada', 'cancelada'])
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ success: false, message: 'Estado de venta inválido' });
+  const cotizacion = await Cotizacion.findOne({ _id: req.params.id, estado: 'confirmada' });
+  if (!cotizacion) return res.status(404).json({ success: false, message: 'Venta confirmada no encontrada' });
+  if (req.body.estadoPago) cotizacion.venta.estadoPago = req.body.estadoPago;
+  if (req.body.estadoEntrega) cotizacion.venta.estadoEntrega = req.body.estadoEntrega;
+  await cotizacion.save();
+  await cotizacion.populate('confirmadaPor', 'nombre email');
+  return res.json({ success: true, data: cotizacion, message: 'Seguimiento de venta actualizado' });
 });
 
 router.get('/:id/mensaje', async (req, res) => {

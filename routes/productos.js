@@ -6,7 +6,7 @@ const { getPricingConfig } = require('../utils/pricing');
 const Categoria = require('../models/Categoria');
 const { authenticate, optionalAuthenticate, requireRoles } = require('../middleware/auth');
 const { deleteAssets } = require('../services/imageStorage');
-const { serializeAuthenticatedProduct, serializePublicProduct } = require('../utils/publicProduct');
+const { serializeAuthenticatedProduct, serializePublicProduct, serializeSellerProduct } = require('../utils/publicProduct');
 
 // GET /api/productos - Obtener todos los productos con filtros y paginación
 router.get('/', optionalAuthenticate, async (req, res) => {
@@ -95,9 +95,11 @@ router.get('/', optionalAuthenticate, async (req, res) => {
 
     res.json({
       success: true,
-      data: req.user
+      data: req.user && ['admin', 'editor'].includes(req.user.rol)
         ? productos.map(serializeAuthenticatedProduct)
-        : productos.map(serializePublicProduct),
+        : req.user?.rol === 'vendedor'
+          ? productos.map(serializeSellerProduct)
+          : productos.map(serializePublicProduct),
       pagination: {
         pagina: paginaParsed,
         limite: limiteParsed,
@@ -143,16 +145,13 @@ router.get('/:id', optionalAuthenticate, async (req, res) => {
     if (!req.user) {
       return res.json({ success: true, data: serializePublicProduct(producto) });
     }
-
-    // Agregar precios calculados para usuarios autenticados
-    const precios = producto.calcularCuotas();
-
-    res.json({
+    return res.json({
       success: true,
-      data: {
-        ...producto.toObject(),
-        precios
-      }
+      data: ['admin', 'editor'].includes(req.user.rol)
+        ? serializeAuthenticatedProduct(producto)
+        : req.user.rol === 'vendedor'
+          ? serializeSellerProduct(producto)
+          : serializePublicProduct(producto)
     });
   } catch (error) {
     res.status(500).json({
@@ -335,7 +334,7 @@ router.delete('/:id', authenticate, requireRoles('admin'), async (req, res) => {
 });
 
 // GET /api/productos/:id/cotizar - Obtener cotización de un producto
-router.get('/:id/cotizar', authenticate, async (req, res) => {
+router.get('/:id/cotizar', authenticate, requireRoles('editor', 'admin'), async (req, res) => {
   try {
     const producto = await Producto.findById(req.params.id)
       .populate('categoria', 'nombre');

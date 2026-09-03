@@ -16,7 +16,7 @@ router.get('/', asyncHandler(async (req, res) => {
 }));
 
 router.put('/:id/aprobar', [
-  body('rol').isIn(['admin', 'editor', 'consulta']).withMessage('Rol inválido')
+  body('rol').isIn(['admin', 'editor', 'vendedor', 'consulta']).withMessage('Rol inválido')
 ], asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
@@ -31,7 +31,7 @@ router.put('/:id/aprobar', [
 }));
 
 router.put('/:id/rol', [
-  body('rol').isIn(['admin', 'editor', 'consulta']).withMessage('Rol inválido')
+  body('rol').isIn(['admin', 'editor', 'vendedor', 'consulta']).withMessage('Rol inválido')
 ], asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });

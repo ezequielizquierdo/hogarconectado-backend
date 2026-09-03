@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { serializeAuthenticatedProduct, serializePublicProduct } = require('../utils/publicProduct');
+const { serializeAuthenticatedProduct, serializePublicProduct, serializeSellerProduct } = require('../utils/publicProduct');
 
 test('serializePublicProduct expone solo datos aptos para el catálogo público', () => {
   const result = serializePublicProduct({
@@ -41,4 +41,26 @@ test('serializeAuthenticatedProduct agrega los precios completos calculados', ()
 
   assert.deepEqual(result.precios, prices);
   assert.equal(result.marca, 'Marca');
+});
+
+test('serializeSellerProduct permite cotizar sin exponer costos ni porcentaje', () => {
+  const result = serializeSellerProduct({
+    toObject: () => ({
+      _id: 'producto-1', marca: 'Marca', modelo: 'Modelo', precioBase: 371000,
+      porcentajeGanancia: 15, imagenPublicIds: ['interno'], precioConGanancia: 430000
+    }),
+    calcularCuotas: () => ({
+      contado: 430000,
+      factura: { costoBase: 389550, unPago: 451500 },
+      tresCuotas: { costoBase: 419155, total: 485814, cuota: 161938 },
+      seisCuotas: { costoBase: 450920, total: 521934, cuota: 86989 }
+    })
+  });
+
+  assert.equal(result.precios.contado, 430000);
+  assert.equal(result.precios.factura.unPago, 451500);
+  assert.equal('costoBase' in result.precios.factura, false);
+  assert.equal('precioBase' in result, false);
+  assert.equal('porcentajeGanancia' in result, false);
+  assert.equal('imagenPublicIds' in result, false);
 });

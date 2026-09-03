@@ -66,7 +66,17 @@ const cotizacionSchema = new mongoose.Schema({
   resumenConfirmacion: {
     totalVendido: Number,
     dineroARendir: Number,
-    gananciaVendedor: Number
+    gananciaVendedor: Number,
+    participacionHogarConectado: Number
+  },
+  tipoLiquidacion: { type: String, enum: ['operacion-interna', 'vendedor-50-margen'], default: 'operacion-interna' },
+  venta: {
+    compradorNombre: String,
+    entregaAcordada: String,
+    agregarEnvio: { type: Boolean, default: false },
+    costoEnvio: { type: Number, default: 0, min: 0 },
+    estadoPago: { type: String, enum: ['pendiente', 'parcial', 'confirmado'], default: 'pendiente' },
+    estadoEntrega: { type: String, enum: ['pendiente', 'coordinada', 'entregada', 'cancelada'], default: 'pendiente' }
   },
   observaciones: String,
   creadaPor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true }
@@ -84,14 +94,23 @@ cotizacionSchema.methods.calcularTotales = function() {
 };
 
 cotizacionSchema.methods.calcularResumenConfirmacion = function() {
-  const dineroARendir = this.productos.reduce((total, item) => {
+  const costoProductos = this.productos.reduce((total, item) => {
     return total + getSettlementUnitCost(item, this.modalidadPago) * item.cantidad;
   }, 0);
-  const totalVendido = this.totales.total;
+  const costoEnvio = this.venta?.agregarEnvio ? Number(this.venta.costoEnvio || 0) : 0;
+  const totalProductos = this.totales.total;
+  const margenComercial = Math.max(0, totalProductos - costoProductos);
+  const gananciaVendedor = this.tipoLiquidacion === 'vendedor-50-margen'
+    ? margenComercial / 2
+    : margenComercial;
+  const participacionHogarConectado = margenComercial - gananciaVendedor;
+  const totalVendido = totalProductos + costoEnvio;
+  const dineroARendir = totalVendido - gananciaVendedor;
   this.resumenConfirmacion = {
     totalVendido,
     dineroARendir,
-    gananciaVendedor: totalVendido - dineroARendir
+    gananciaVendedor,
+    participacionHogarConectado
   };
   return this.resumenConfirmacion;
 };
