@@ -60,8 +60,15 @@ router.post('/google', [
   }
 });
 
-router.get('/me', authenticate, (req, res) => {
-  res.json({ success: true, data: req.user });
+router.get('/me', authenticate, async (req, res, next) => {
+  try {
+    if (req.user.rol === 'vendedor' && !req.user.codigoVendedor) {
+      await req.user.save();
+    }
+    res.json({ success: true, data: req.user });
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.post('/logout', authenticate, (req, res) => {

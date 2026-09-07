@@ -4,6 +4,7 @@ const Cotizacion = require('../models/Cotizacion');
 const Producto = require('../models/Producto');
 const { canAccessOwnedResource, requireRoles } = require('../middleware/auth');
 const { calculatePrices, getProductPricingConfig } = require('../utils/pricing');
+const { buildQuoteOwnershipFilter } = require('../utils/sellerAccess');
 
 const router = express.Router();
 
@@ -112,16 +113,27 @@ router.get('/estadisticas/resumen', requireRoles('editor', 'admin', 'vendedor'),
     const inicioDia = new Date(hoy); inicioDia.setHours(0, 0, 0, 0);
     const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
     const inicioSemana = new Date(inicioDia); inicioSemana.setDate(inicioDia.getDate() - inicioDia.getDay());
-    const [total, dia, semana, mes, porEstado] = await Promise.all([
-      Cotizacion.countDocuments(),
-      Cotizacion.countDocuments({ createdAt: { $gte: inicioDia } }),
-      Cotizacion.countDocuments({ createdAt: { $gte: inicioSemana } }),
-      Cotizacion.countDocuments({ createdAt: { $gte: inicioMes } }),
-      Cotizacion.aggregate([{ $group: { _id: '$estado', count: { $sum: 1 } } }])
+    const ownershipFilter = buildQuoteOwnershipFilter(req.user);
+    const [total, dia, semana, mes, porEstado, liquidacion] = await Promise.all([
+      Cotizacion.countDocuments(ownershipFilter),
+      Cotizacion.countDocuments({ ...ownershipFilter, createdAt: { $gte: inicioDia } }),
+      Cotizacion.countDocuments({ ...ownershipFilter, createdAt: { $gte: inicioSemana } }),
+      Cotizacion.countDocuments({ ...ownershipFilter, createdAt: { $gte: inicioMes } }),
+      Cotizacion.aggregate([{ $match: ownershipFilter }, { $group: { _id: '$estado', count: { $sum: 1 } } }]),
+      Cotizacion.aggregate([
+        { $match: { ...ownershipFilter, estado: 'confirmada' } },
+        { $group: {
+          _id: null,
+          totalVendido: { $sum: '$resumenConfirmacion.totalVendido' },
+          dineroARendir: { $sum: '$resumenConfirmacion.dineroARendir' },
+          gananciaVendedor: { $sum: '$resumenConfirmacion.gananciaVendedor' }
+        } }
+      ])
     ]);
     res.json({ success: true, data: {
       total, hoy: dia, semana, mes,
-      porEstado: Object.fromEntries(porEstado.map(item => [item._id, item.count]))
+      porEstado: Object.fromEntries(porEstado.map(item => [item._id, item.count])),
+      liquidacion: liquidacion[0] || { totalVendido: 0, dineroARendir: 0, gananciaVendedor: 0 }
     } });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error al obtener estadísticas' });

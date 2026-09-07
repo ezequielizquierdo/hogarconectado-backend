@@ -20,13 +20,13 @@ router.put('/:id/aprobar', [
 ], asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
-  const usuario = await Usuario.findByIdAndUpdate(req.params.id, {
-    rol: req.body.rol,
-    estado: 'activo',
-    aprobadoPor: req.user._id,
-    aprobadoEn: new Date()
-  }, { new: true, runValidators: true });
+  const usuario = await Usuario.findById(req.params.id);
   if (!usuario) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+  usuario.rol = req.body.rol;
+  usuario.estado = 'activo';
+  usuario.aprobadoPor = req.user._id;
+  usuario.aprobadoEn = new Date();
+  await usuario.save();
   res.json({ success: true, data: usuario, message: 'Usuario aprobado' });
 }));
 
@@ -39,8 +39,10 @@ router.put('/:id/rol', [
     const otrosAdmins = await Usuario.countDocuments({ _id: { $ne: req.user._id }, rol: 'admin', estado: 'activo' });
     if (otrosAdmins === 0) return res.status(400).json({ success: false, message: 'No podés quitar el rol al último administrador' });
   }
-  const usuario = await Usuario.findByIdAndUpdate(req.params.id, { rol: req.body.rol }, { new: true, runValidators: true });
+  const usuario = await Usuario.findById(req.params.id);
   if (!usuario) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+  usuario.rol = req.body.rol;
+  await usuario.save();
   res.json({ success: true, data: usuario });
 }));
 

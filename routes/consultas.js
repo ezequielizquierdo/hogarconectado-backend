@@ -3,10 +3,12 @@ const rateLimit = require('express-rate-limit');
 const { body, header, param, validationResult } = require('express-validator');
 const Consulta = require('../models/Consulta');
 const Producto = require('../models/Producto');
+const Usuario = require('../models/Usuario');
 const { authenticate, requireRoles } = require('../middleware/auth');
 const { isValidPhone, normalizeContactName, normalizePhone } = require('../utils/contact');
 const { CONSULTA_ESTADOS, buildConsultaStateUpdate } = require('../utils/consultaState');
 const { notifyAdminsNewInquiry } = require('../services/pushNotifications');
+const { buildSellerInquiryFilter } = require('../utils/sellerAccess');
 
 const router = express.Router();
 const asyncHandler = handler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
@@ -29,6 +31,7 @@ const createValidators = [
   }),
   body('nombre').customSanitizer(normalizeContactName).isLength({ min: 2, max: 100 }),
   body('telefono').customSanitizer(normalizePhone).custom(isValidPhone),
+  body('codigoVendedor').optional({ values: 'falsy' }).trim().matches(/^[a-z0-9-]{6,32}$/),
   body('website').optional({ values: 'falsy' }).isEmpty()
 ];
 
@@ -77,6 +80,10 @@ router.post('/', publicInquiryLimiter, createValidators, async (req, res) => {
     }));
     const firstProduct = snapshots[0];
 
+    const vendedorOrigen = req.body.codigoVendedor
+      ? await Usuario.findOne({ codigoVendedor: req.body.codigoVendedor, rol: 'vendedor', estado: 'activo' }).select('_id')
+      : null;
+
     const consulta = await Consulta.create({
       producto: firstProduct.producto,
       productoSnapshot: firstProduct.productoSnapshot,
@@ -86,6 +93,7 @@ router.post('/', publicInquiryLimiter, createValidators, async (req, res) => {
         telefono: req.body.telefono
       },
       historialEstados: [{ estado: 'nueva' }],
+      vendedorOrigen: vendedorOrigen?._id,
       idempotencyKey
     });
 
@@ -113,7 +121,7 @@ router.use(authenticate, requireRoles('admin', 'vendedor'));
 
 router.get('/resumen', asyncHandler(async (_req, res) => {
   const ownershipFilter = _req.user.rol === 'vendedor'
-    ? { $or: [{ asignadaA: _req.user._id }, { asignadaA: { $exists: false } }, { asignadaA: null }] }
+    ? buildSellerInquiryFilter(_req.user._id)
     : {};
   const [nuevas, totalAbiertas] = await Promise.all([
     Consulta.countDocuments({ ...ownershipFilter, estado: 'nueva' }),
@@ -128,7 +136,7 @@ router.get('/', asyncHandler(async (req, res) => {
   const limite = Math.min(100, Math.max(1, Number.parseInt(req.query.limite, 10) || 30));
   const filtros = {};
   if (req.user.rol === 'vendedor') {
-    filtros.$or = [{ asignadaA: req.user._id }, { asignadaA: { $exists: false } }, { asignadaA: null }];
+    Object.assign(filtros, buildSellerInquiryFilter(req.user._id));
   }
 
   if (req.query.estado) {
@@ -141,6 +149,7 @@ router.get('/', asyncHandler(async (req, res) => {
   const [data, total] = await Promise.all([
     Consulta.find(filtros)
       .populate('asignadaA', 'nombre email')
+      .populate('vendedorOrigen', 'nombre email codigoVendedor')
       .sort({ createdAt: -1 })
       .skip((pagina - 1) * limite)
       .limit(limite)
@@ -175,6 +184,9 @@ router.patch('/:id/estado', [
       message: 'Otro administrador ya está gestionando esta consulta'
     });
   }
+  if (req.user.rol === 'vendedor' && consulta.vendedorOrigen && consulta.vendedorOrigen.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ success: false, message: 'Esta consulta pertenece a otro vendedor' });
+  }
 
   const estado = req.body.estado;
   if (req.user.rol === 'vendedor' && !consulta.asignadaA && estado !== 'nueva') {
@@ -187,7 +199,10 @@ router.patch('/:id/estado', [
   }));
   consulta.historialEstados.push({ estado, cambiadoPor: req.user._id });
   await consulta.save();
-  await consulta.populate('asignadaA', 'nombre email');
+  await consulta.populate([
+    { path: 'asignadaA', select: 'nombre email' },
+    { path: 'vendedorOrigen', select: 'nombre email codigoVendedor' }
+  ]);
 
   res.json({ success: true, data: consulta, message: 'Estado actualizado' });
 }));

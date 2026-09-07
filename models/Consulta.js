@@ -38,6 +38,10 @@ const consultaSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Usuario'
   },
+  vendedorOrigen: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Usuario'
+  },
   atendidaAt: Date,
   cerradaAt: Date,
   historialEstados: [{
@@ -56,5 +60,6 @@ const consultaSchema = new mongoose.Schema({
 consultaSchema.index({ estado: 1, createdAt: -1 });
 consultaSchema.index({ producto: 1, createdAt: -1 });
 consultaSchema.index({ asignadaA: 1, estado: 1 });
+consultaSchema.index({ vendedorOrigen: 1, estado: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Consulta', consultaSchema);
