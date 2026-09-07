@@ -159,7 +159,7 @@ router.post('/:id/enlace-publico', async (req, res) => {
     const frontendUrl = (process.env.FRONTEND_URL || 'https://hogarconectado.onrender.com').replace(/\/$/, '');
     return res.json({
       success: true,
-      data: { url: `${frontendUrl}/cotizacion/${token}`, venceAt: cotizacion.accesoPublico.venceAt },
+      data: { url: `${frontendUrl}/cotizacion?token=${encodeURIComponent(token)}`, venceAt: cotizacion.accesoPublico.venceAt },
       message: 'Enlace de aceptación generado'
     });
   } catch {
@@ -284,7 +284,7 @@ router.get('/:id/mensaje', async (req, res) => {
     if (cotizacion.estado === 'pendiente') cotizacion.estado = 'enviada';
     await cotizacion.save();
     const frontendUrl = (process.env.FRONTEND_URL || 'https://hogarconectado.onrender.com').replace(/\/$/, '');
-    const enlaceCotizacion = `${frontendUrl}/cotizacion/${token}`;
+    const enlaceCotizacion = `${frontendUrl}/cotizacion?token=${encodeURIComponent(token)}`;
     const mensaje = `${cotizacion.generarMensajeWhatsApp()}\n\nRevisá y aceptá la cotización acá:\n${enlaceCotizacion}`;
     res.json({ success: true, data: {
       mensaje,
