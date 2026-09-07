@@ -60,12 +60,16 @@ No versionar `.env`, credenciales, cadenas de conexión ni secretos.
 - El análisis de imágenes genera borradores revisables; nunca debe crear productos automáticamente.
 - MongoDB almacena referencias y metadatos de imágenes, no archivos temporales del filesystem de Render.
 - Mantener snapshots de cotizaciones coherentes con los datos y precios utilizados al crearlas.
+- Los enlaces públicos de cotización almacenan únicamente el hash del token, vencen y no exponen costos internos.
+- Aceptar una cotización crea un pedido idempotente y reserva stock durante 24 horas dentro de una transacción; nunca equivale a confirmar el pago.
+- Las reservas vencidas o canceladas deben devolver exactamente las unidades reservadas antes de cambiar su estado definitivamente.
 
 ## Autenticación y seguridad
 
 - `/health`, la información raíz, el inicio de autenticación, la lectura sanitizada del catálogo y la creación de consultas comerciales son públicas según `server.js`; las operaciones internas requieren JWT.
 - Las respuestas públicas de productos no deben exponer precio base, porcentaje de ganancia, identificadores de almacenamiento ni metadatos internos.
 - Las consultas públicas deben validar y normalizar contacto, limitar frecuencia y conservar idempotencia para evitar doble envío.
+- La consulta y aceptación pública de cotizaciones deben usar tokens no predecibles, rate limiting e idempotencia.
 - Validar tokens de Google con `GOOGLE_CLIENT_ID` y emitir JWT únicamente desde el backend.
 - Aplicar autorización por rol en el backend, incluso si el frontend oculta controles.
 - El rol `vendedor` puede leer precios de venta sin precio base ni costos internos, gestionar únicamente sus cotizaciones, atender consultas disponibles o asignadas y recibir notificaciones; no puede mutar productos, categorías, marcas ni usuarios.

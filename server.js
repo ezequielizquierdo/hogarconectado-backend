@@ -93,7 +93,14 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 
 // Conexión a MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/hogarconectado')
-  .then(() => console.log('✅ Conectado a MongoDB'))
+  .then(() => {
+    console.log('✅ Conectado a MongoDB');
+    const { releaseExpiredReservations } = require('./services/orderReservations');
+    const reservationTimer = setInterval(() => {
+      void releaseExpiredReservations().catch(error => console.error('Error liberando reservas vencidas:', error.message));
+    }, 60 * 1000);
+    reservationTimer.unref();
+  })
   .catch(err => console.error('❌ Error conectando a MongoDB:', err));
 
 // Rutas principales
@@ -134,6 +141,8 @@ const consultasRoutes = require('./routes/consultas');
 const pushRoutes = require('./routes/push');
 const productAssistantRoutes = require('./routes/productAssistant');
 const vendedoresRoutes = require('./routes/vendedores');
+const cotizacionesPublicasRoutes = require('./routes/cotizacionesPublicas');
+const pedidosRoutes = require('./routes/pedidos');
 const { authenticate } = require('./middleware/auth');
 
 const authLimiter = rateLimit({
@@ -147,10 +156,12 @@ const authLimiter = rateLimit({
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/consultas', consultasRoutes);
 app.use('/api/vendedores', vendedoresRoutes);
+app.use('/api/cotizaciones-publicas', cotizacionesPublicasRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/categorias', categoriasRoutes);
 app.use('/api/productos', productosRoutes);
 app.use('/api/cotizaciones', authenticate, cotizacionesRoutes);
+app.use('/api/pedidos', authenticate, pedidosRoutes);
 app.use('/api/precios', authenticate, preciosRoutes);
 app.use('/api/upload', authenticate, uploadRoutes);
 app.use('/api/product-assistant', authenticate, productAssistantRoutes);

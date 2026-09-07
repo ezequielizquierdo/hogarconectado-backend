@@ -5,6 +5,7 @@ const Producto = require('../models/Producto');
 const { canAccessOwnedResource, requireRoles } = require('../middleware/auth');
 const { calculatePrices, getProductPricingConfig } = require('../utils/pricing');
 const { buildQuoteOwnershipFilter } = require('../utils/sellerAccess');
+const { createPublicQuoteToken, hashPublicQuoteToken } = require('../utils/publicQuoteToken');
 
 const router = express.Router();
 
@@ -140,6 +141,32 @@ router.get('/estadisticas/resumen', requireRoles('editor', 'admin', 'vendedor'),
   }
 });
 
+router.post('/:id/enlace-publico', async (req, res) => {
+  try {
+    const cotizacion = await findAuthorized(req, res);
+    if (!cotizacion) return;
+    if (cotizacion.estado === 'cancelada' || cotizacion.aceptacionCliente?.pedido) {
+      return res.status(409).json({ success: false, message: 'Esta cotización ya no admite un nuevo enlace de aceptación' });
+    }
+    const token = createPublicQuoteToken();
+    cotizacion.accesoPublico = {
+      tokenHash: hashPublicQuoteToken(token),
+      emitidoAt: new Date(),
+      venceAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    };
+    if (cotizacion.estado === 'pendiente') cotizacion.estado = 'enviada';
+    await cotizacion.save();
+    const frontendUrl = (process.env.FRONTEND_URL || 'https://hogarconectado.onrender.com').replace(/\/$/, '');
+    return res.json({
+      success: true,
+      data: { url: `${frontendUrl}/cotizacion/${token}`, venceAt: cotizacion.accesoPublico.venceAt },
+      message: 'Enlace de aceptación generado'
+    });
+  } catch {
+    return res.status(500).json({ success: false, message: 'No pudimos generar el enlace' });
+  }
+});
+
 router.get('/', async (req, res) => {
   try {
     const limite = Math.max(1, Math.min(Number.parseInt(req.query.limite) || 20, 100));
@@ -163,6 +190,7 @@ router.get('/', async (req, res) => {
         .populate('productos.producto', 'marca modelo categoria')
         .populate('creadaPor', 'nombre email')
         .populate('confirmadaPor', 'nombre email')
+        .populate('aceptacionCliente.pedido', 'estado reservadoAt reservaVenceAt')
         // El historial usa los snapshots de la cotización. `lean()` evita que
         // los virtuales de Producto intenten recalcular precios con una
         // proyección que deliberadamente no incluye `precioBase`.
@@ -181,6 +209,7 @@ router.get('/:id', async (req, res) => {
     if (!cotizacion) return;
     await cotizacion.populate('productos.producto', 'marca modelo categoria descripcion');
     await cotizacion.populate('confirmadaPor', 'nombre email');
+    await cotizacion.populate('aceptacionCliente.pedido', 'estado reservadoAt reservaVenceAt');
     res.json({
       success: true,
       data: serializeForUser(cotizacion, req.user)
@@ -243,10 +272,24 @@ router.get('/:id/mensaje', async (req, res) => {
   try {
     const cotizacion = await findAuthorized(req, res);
     if (!cotizacion) return;
-    const mensaje = cotizacion.generarMensajeWhatsApp();
+    if (cotizacion.estado === 'cancelada' || cotizacion.aceptacionCliente?.pedido) {
+      return res.status(409).json({ success: false, message: 'Esta cotización ya no puede enviarse para aceptación' });
+    }
+    const token = createPublicQuoteToken();
+    cotizacion.accesoPublico = {
+      tokenHash: hashPublicQuoteToken(token),
+      emitidoAt: new Date(),
+      venceAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    };
+    if (cotizacion.estado === 'pendiente') cotizacion.estado = 'enviada';
+    await cotizacion.save();
+    const frontendUrl = (process.env.FRONTEND_URL || 'https://hogarconectado.onrender.com').replace(/\/$/, '');
+    const enlaceCotizacion = `${frontendUrl}/cotizacion/${token}`;
+    const mensaje = `${cotizacion.generarMensajeWhatsApp()}\n\nRevisá y aceptá la cotización acá:\n${enlaceCotizacion}`;
     res.json({ success: true, data: {
       mensaje,
       telefono: cotizacion.datosContacto.telefono,
+      enlaceCotizacion,
       urlWhatsApp: `https://wa.me/${cotizacion.datosContacto.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(mensaje)}`
     } });
   } catch (error) {

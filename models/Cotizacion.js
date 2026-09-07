@@ -61,6 +61,15 @@ const cotizacionSchema = new mongoose.Schema({
     enum: ['pendiente', 'enviada', 'confirmada', 'cancelada'],
     default: 'pendiente'
   },
+  accesoPublico: {
+    tokenHash: { type: String, select: false },
+    emitidoAt: Date,
+    venceAt: Date
+  },
+  aceptacionCliente: {
+    aceptadaAt: Date,
+    pedido: { type: mongoose.Schema.Types.ObjectId, ref: 'Pedido' }
+  },
   confirmadaPor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
   confirmadaAt: Date,
   resumenConfirmacion: {
