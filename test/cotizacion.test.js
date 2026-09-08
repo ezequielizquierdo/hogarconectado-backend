@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 const Cotizacion = require('../models/Cotizacion');
 const Producto = require('../models/Producto');
+const { serializeForUser } = require('../routes/cotizaciones');
 
 function makeQuote(modalidadPago) {
   return new Cotizacion({
@@ -132,6 +133,21 @@ test('genera mensajes de cotizaciones históricas sin estructuras de precios nue
   assert.match(mensaje, /Marca Modelo x2: \$260/);
   assert.match(mensaje, /Total: \$260/);
   assert.match(mensaje, /Modalidad: Facturado en 1 cuota con ganancia/);
+});
+
+test('serializa ObjectId de cotizaciones lean como cadenas utilizables en rutas', () => {
+  const quoteId = new mongoose.Types.ObjectId();
+  const leanQuote = {
+    _id: quoteId,
+    productos: [],
+    creadaPor: new mongoose.Types.ObjectId()
+  };
+
+  const serialized = serializeForUser(leanQuote, { rol: 'admin' });
+  const payload = JSON.parse(JSON.stringify(serialized));
+
+  assert.equal(payload._id, quoteId.toString());
+  assert.equal(serialized._id, quoteId);
 });
 
 test('permite serializar proyecciones de producto sin ejecutar virtuales de precio', () => {

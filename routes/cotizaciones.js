@@ -1,5 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
+const mongoose = require('mongoose');
 const Cotizacion = require('../models/Cotizacion');
 const Producto = require('../models/Producto');
 const { canAccessOwnedResource, requireRoles } = require('../middleware/auth');
@@ -12,7 +13,10 @@ const router = express.Router();
 function serializeForUser(cotizacion, user) {
   const source = typeof cotizacion.toObject === 'function'
     ? cotizacion.toObject({ virtuals: false })
-    : structuredClone(cotizacion);
+    // Una copia superficial conserva los ObjectId y permite que Express use
+    // su toJSON(). structuredClone() les quitaba el prototipo y el frontend
+    // recibía objetos que terminaban convertidos en "[object Object]".
+    : { ...cotizacion };
   if (user.rol !== 'vendedor') return source;
   source.productos = source.productos.map(item => {
     const precios = item.detalles?.precios || {};
@@ -45,6 +49,10 @@ const validators = [
 ];
 
 async function findAuthorized(req, res) {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    res.status(400).json({ success: false, message: 'Identificador de cotización inválido' });
+    return null;
+  }
   const cotizacion = await Cotizacion.findById(req.params.id);
   if (!cotizacion) {
     res.status(404).json({ success: false, message: 'Cotización no encontrada' });
@@ -335,3 +343,4 @@ router.delete('/:id', requireRoles('admin'), async (req, res) => {
 });
 
 module.exports = router;
+module.exports.serializeForUser = serializeForUser;
