@@ -280,6 +280,8 @@ router.get('/:id/mensaje', async (req, res) => {
     if (cotizacion.estado === 'cancelada') {
       return res.status(409).json({ success: false, message: 'Esta cotización ya no puede enviarse para aceptación' });
     }
+    const mensajeBase = cotizacion.generarMensajeWhatsApp();
+    const telefono = String(cotizacion.datosContacto?.telefono || '').replace(/\D/g, '');
     const token = createPublicQuoteToken();
     const accesoPublico = {
       tokenHash: hashPublicQuoteToken(token),
@@ -287,11 +289,24 @@ router.get('/:id/mensaje', async (req, res) => {
       venceAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     };
     const estado = cotizacion.estado === 'pendiente' ? 'enviada' : cotizacion.estado;
-    // La actualización atómica evita revalidar snapshots históricos completos.
-    await Cotizacion.updateOne(
-      { _id: cotizacion._id },
-      { $set: { accesoPublico, estado } }
-    );
+    try {
+      // La actualización atómica evita revalidar snapshots históricos completos.
+      await Cotizacion.updateOne(
+        { _id: cotizacion._id },
+        { $set: { accesoPublico, estado } }
+      );
+    } catch (error) {
+      // Compartir el detalle sigue siendo útil aunque el enlace de aceptación
+      // no pueda persistirse temporalmente.
+      console.error('Error al guardar enlace público de cotización:', error.message);
+      return res.json({ success: true, data: {
+        mensaje: mensajeBase,
+        telefono,
+        enlaceCotizacion: null,
+        urlWhatsApp: `https://wa.me/${telefono}?text=${encodeURIComponent(mensajeBase)}`,
+        advertencia: 'La cotización puede compartirse, pero el enlace de aceptación no está disponible temporalmente'
+      } });
+    }
     cotizacion.accesoPublico = accesoPublico;
     cotizacion.estado = estado;
     const frontendUrl = (process.env.FRONTEND_URL || 'https://hogarconectado.onrender.com').replace(/\/$/, '');
@@ -299,9 +314,9 @@ router.get('/:id/mensaje', async (req, res) => {
     const mensaje = `${cotizacion.generarMensajeWhatsApp()}\n\nRevisá y aceptá la cotización acá:\n${enlaceCotizacion}`;
     res.json({ success: true, data: {
       mensaje,
-      telefono: cotizacion.datosContacto.telefono,
+      telefono,
       enlaceCotizacion,
-      urlWhatsApp: `https://wa.me/${cotizacion.datosContacto.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(mensaje)}`
+      urlWhatsApp: `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`
     } });
   } catch (error) {
     console.error('Error al generar mensaje de cotización:', error.message);
