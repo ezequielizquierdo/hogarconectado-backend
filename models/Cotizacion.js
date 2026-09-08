@@ -143,7 +143,7 @@ cotizacionSchema.methods.generarMensajeWhatsApp = function() {
 
   const modalidad = {
     contado: 'Contado',
-    facturado: 'Facturado en 1 cuota con ganancia',
+    facturado: 'Facturado en 1 cuota',
     '3-cuotas': '3 cuotas',
     '6-cuotas': '6 cuotas'
   }[this.modalidadPago] || this.modalidadPago;

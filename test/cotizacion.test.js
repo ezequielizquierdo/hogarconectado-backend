@@ -132,7 +132,8 @@ test('genera mensajes de cotizaciones históricas sin estructuras de precios nue
 
   assert.match(mensaje, /Marca Modelo x2: \$260/);
   assert.match(mensaje, /Total: \$260/);
-  assert.match(mensaje, /Modalidad: Facturado en 1 cuota con ganancia/);
+  assert.match(mensaje, /Modalidad: Facturado en 1 cuota/);
+  assert.doesNotMatch(mensaje, /ganancia/i);
 });
 
 test('serializa ObjectId de cotizaciones lean como cadenas utilizables en rutas', () => {

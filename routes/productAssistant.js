@@ -19,7 +19,8 @@ async function findPossibleDuplicates(draft) {
     marca: { $regex: `^${escapeRegex(draft.marca.trim())}$`, $options: 'i' },
     modelo: { $regex: `^${escapeRegex(draft.modelo.trim())}$`, $options: 'i' }
   })
-    .select('marca modelo imagenes')
+    .select('marca modelo categoria descripcion precioBase porcentajeGanancia stock imagenes imagenPublicIds')
+    .populate('categoria', 'nombre')
     .limit(5)
     .lean();
 }
@@ -37,6 +38,13 @@ router.post('/duplicates', requireRoles('editor', 'admin'), async (req, res) => 
       _id: product._id,
       marca: product.marca,
       modelo: product.modelo,
+      categoria: product.categoria,
+      descripcion: product.descripcion || '',
+      precioBase: product.precioBase,
+      porcentajeGanancia: product.porcentajeGanancia,
+      stock: product.stock,
+      imagenes: product.imagenes || [],
+      imagenPublicIds: product.imagenPublicIds || [],
       imagen: product.imagenes?.[0]
     }))
   });
@@ -58,6 +66,13 @@ router.post('/analyze', requireRoles('editor', 'admin'), analysisLimiter, async 
           _id: product._id,
           marca: product.marca,
           modelo: product.modelo,
+          categoria: product.categoria,
+          descripcion: product.descripcion || '',
+          precioBase: product.precioBase,
+          porcentajeGanancia: product.porcentajeGanancia,
+          stock: product.stock,
+          imagenes: product.imagenes || [],
+          imagenPublicIds: product.imagenPublicIds || [],
           imagen: product.imagenes?.[0]
         }))
       }
