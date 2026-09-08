@@ -145,7 +145,7 @@ router.post('/:id/enlace-publico', async (req, res) => {
   try {
     const cotizacion = await findAuthorized(req, res);
     if (!cotizacion) return;
-    if (cotizacion.estado === 'cancelada' || cotizacion.aceptacionCliente?.pedido) {
+    if (cotizacion.estado === 'cancelada') {
       return res.status(409).json({ success: false, message: 'Esta cotización ya no admite un nuevo enlace de aceptación' });
     }
     const token = createPublicQuoteToken();
