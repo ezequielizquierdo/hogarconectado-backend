@@ -149,17 +149,22 @@ router.post('/:id/enlace-publico', async (req, res) => {
       return res.status(409).json({ success: false, message: 'Esta cotización ya no admite un nuevo enlace de aceptación' });
     }
     const token = createPublicQuoteToken();
-    cotizacion.accesoPublico = {
+    const accesoPublico = {
       tokenHash: hashPublicQuoteToken(token),
       emitidoAt: new Date(),
       venceAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     };
-    if (cotizacion.estado === 'pendiente') cotizacion.estado = 'enviada';
-    await cotizacion.save();
+    const estado = cotizacion.estado === 'pendiente' ? 'enviada' : cotizacion.estado;
+    await Cotizacion.updateOne(
+      { _id: cotizacion._id },
+      { $set: { accesoPublico, estado } }
+    );
+    cotizacion.accesoPublico = accesoPublico;
+    cotizacion.estado = estado;
     const frontendUrl = (process.env.FRONTEND_URL || 'https://hogarconectado.onrender.com').replace(/\/$/, '');
     return res.json({
       success: true,
-      data: { url: `${frontendUrl}/cotizacion.html?token=${encodeURIComponent(token)}`, venceAt: cotizacion.accesoPublico.venceAt },
+      data: { url: `${frontendUrl}/cotizacion.html?token=${encodeURIComponent(token)}`, venceAt: accesoPublico.venceAt },
       message: 'Enlace de aceptación generado'
     });
   } catch {
@@ -272,17 +277,23 @@ router.get('/:id/mensaje', async (req, res) => {
   try {
     const cotizacion = await findAuthorized(req, res);
     if (!cotizacion) return;
-    if (cotizacion.estado === 'cancelada' || cotizacion.aceptacionCliente?.pedido) {
+    if (cotizacion.estado === 'cancelada') {
       return res.status(409).json({ success: false, message: 'Esta cotización ya no puede enviarse para aceptación' });
     }
     const token = createPublicQuoteToken();
-    cotizacion.accesoPublico = {
+    const accesoPublico = {
       tokenHash: hashPublicQuoteToken(token),
       emitidoAt: new Date(),
       venceAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     };
-    if (cotizacion.estado === 'pendiente') cotizacion.estado = 'enviada';
-    await cotizacion.save();
+    const estado = cotizacion.estado === 'pendiente' ? 'enviada' : cotizacion.estado;
+    // La actualización atómica evita revalidar snapshots históricos completos.
+    await Cotizacion.updateOne(
+      { _id: cotizacion._id },
+      { $set: { accesoPublico, estado } }
+    );
+    cotizacion.accesoPublico = accesoPublico;
+    cotizacion.estado = estado;
     const frontendUrl = (process.env.FRONTEND_URL || 'https://hogarconectado.onrender.com').replace(/\/$/, '');
     const enlaceCotizacion = `${frontendUrl}/cotizacion.html?token=${encodeURIComponent(token)}`;
     const mensaje = `${cotizacion.generarMensajeWhatsApp()}\n\nRevisá y aceptá la cotización acá:\n${enlaceCotizacion}`;
@@ -293,6 +304,7 @@ router.get('/:id/mensaje', async (req, res) => {
       urlWhatsApp: `https://wa.me/${cotizacion.datosContacto.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(mensaje)}`
     } });
   } catch (error) {
+    console.error('Error al generar mensaje de cotización:', error.message);
     res.status(500).json({ success: false, message: 'Error al generar mensaje' });
   }
 });

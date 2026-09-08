@@ -122,6 +122,18 @@ test('el mensaje informa cuota y total para modalidades financiadas', () => {
   assert.match(mensaje, /Modalidad: 3 cuotas/);
 });
 
+test('genera mensajes de cotizaciones históricas sin estructuras de precios nuevas', () => {
+  const cotizacion = makeQuote('facturado');
+  cotizacion.productos[0].detalles.precios.factura = undefined;
+  cotizacion.totales = undefined;
+
+  const mensaje = cotizacion.generarMensajeWhatsApp();
+
+  assert.match(mensaje, /Marca Modelo x2: \$260/);
+  assert.match(mensaje, /Total: \$260/);
+  assert.match(mensaje, /Modalidad: Facturado en 1 cuota con ganancia/);
+});
+
 test('permite serializar proyecciones de producto sin ejecutar virtuales de precio', () => {
   const productoProyectado = new Producto({
     categoria: new mongoose.Types.ObjectId(),

@@ -8,25 +8,34 @@ const preciosSnapshotSchema = new mongoose.Schema({
 }, { _id: false });
 
 function getSelectedUnitPrice(item, modalidadPago) {
-  const precios = item.detalles.precios;
-  if (modalidadPago === 'facturado') return precios.factura.unPago;
-  if (modalidadPago === '3-cuotas') return precios.tresCuotas.total;
-  if (modalidadPago === '6-cuotas') return precios.seisCuotas.total;
-  return precios.contado;
+  const detalles = item?.detalles || {};
+  const precios = detalles.precios || {};
+  const contado = Number(precios.contado ?? detalles.precioVenta ?? detalles.precioBase ?? 0);
+  if (modalidadPago === 'facturado') return Number(precios.factura?.unPago ?? contado);
+  if (modalidadPago === '3-cuotas') return Number(precios.tresCuotas?.total ?? contado);
+  if (modalidadPago === '6-cuotas') return Number(precios.seisCuotas?.total ?? contado);
+  return contado;
 }
 
 function getSettlementUnitCost(item, modalidadPago) {
-  const precios = item.detalles.precios;
-  if (modalidadPago === 'facturado') return precios.factura.costoBase;
+  const detalles = item?.detalles || {};
+  const precios = detalles.precios || {};
+  const precioBase = Number(detalles.precioBase ?? 0);
+  const contado = Number(precios.contado ?? precioBase);
+  if (modalidadPago === 'facturado') return Number(precios.factura?.costoBase ?? precioBase);
   if (modalidadPago === '3-cuotas') {
-    return precios.tresCuotas.costoBase
-      ?? item.detalles.precioBase * (precios.tresCuotas.total / precios.contado);
+    return Number(precios.tresCuotas?.costoBase
+      ?? (contado > 0 && precios.tresCuotas?.total != null
+        ? precioBase * (Number(precios.tresCuotas.total) / contado)
+        : precioBase));
   }
   if (modalidadPago === '6-cuotas') {
-    return precios.seisCuotas.costoBase
-      ?? item.detalles.precioBase * (precios.seisCuotas.total / precios.contado);
+    return Number(precios.seisCuotas?.costoBase
+      ?? (contado > 0 && precios.seisCuotas?.total != null
+        ? precioBase * (Number(precios.seisCuotas.total) / contado)
+        : precioBase));
   }
-  return item.detalles.precioBase;
+  return precioBase;
 }
 
 const cotizacionSchema = new mongoose.Schema({
@@ -127,7 +136,9 @@ cotizacionSchema.methods.calcularResumenConfirmacion = function() {
 cotizacionSchema.methods.generarMensajeWhatsApp = function() {
   const detalle = this.productos.map(item => {
     const subtotal = getSelectedUnitPrice(item, this.modalidadPago) * item.cantidad;
-    return `• ${item.detalles.marca} ${item.detalles.modelo} x${item.cantidad}: $${subtotal.toLocaleString('es-AR')}`;
+    const marca = item.detalles?.marca || 'Producto';
+    const modelo = item.detalles?.modelo || '';
+    return `• ${marca} ${modelo} x${item.cantidad}: $${subtotal.toLocaleString('es-AR')}`;
   }).join('\n');
 
   const modalidad = {
@@ -136,13 +147,14 @@ cotizacionSchema.methods.generarMensajeWhatsApp = function() {
     '3-cuotas': '3 cuotas',
     '6-cuotas': '6 cuotas'
   }[this.modalidadPago] || this.modalidadPago;
+  const total = Number(this.totales?.total ?? this.calcularTotales().total ?? 0);
   const cuotas = this.modalidadPago === '3-cuotas'
-    ? `\n3 cuotas de $${(this.totales.total / 3).toLocaleString('es-AR')}`
+    ? `\n3 cuotas de $${(total / 3).toLocaleString('es-AR')}`
     : this.modalidadPago === '6-cuotas'
-      ? `\n6 cuotas de $${(this.totales.total / 6).toLocaleString('es-AR')}`
+      ? `\n6 cuotas de $${(total / 6).toLocaleString('es-AR')}`
       : '';
 
-  return `🏠 *Hogar Conectado*\n\n*Cotización para ${this.datosContacto.nombre}*\n${detalle}\n\n💰 Total: $${this.totales.total.toLocaleString('es-AR')}${cuotas}\nModalidad: ${modalidad}\n\n${this.observaciones || ''}`.trim();
+  return `🏠 *Hogar Conectado*\n\n*Cotización para ${this.datosContacto?.nombre || 'Cliente'}*\n${detalle}\n\n💰 Total: $${total.toLocaleString('es-AR')}${cuotas}\nModalidad: ${modalidad}\n\n${this.observaciones || ''}`.trim();
 };
 
 module.exports = mongoose.model('Cotizacion', cotizacionSchema);
