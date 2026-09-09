@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { buildInquiryNotificationPayload, getPushConfig } = require('../services/pushNotifications');
+const { buildInquiryNotificationPayload, buildPaymentReportedPayload, getPushConfig } = require('../services/pushNotifications');
 
 test('Web Push queda deshabilitado si falta una variable VAPID', () => {
   const previous = {
@@ -95,4 +95,16 @@ test('la notificación resume una consulta con varios productos', () => {
   });
 
   assert.equal(payload.body, 'TCL 435SK y 2 más · Nueva consulta');
+});
+
+test('la notificación de pago dirige a cotizaciones sin exponer datos del comprador', () => {
+  const payload = buildPaymentReportedPayload({
+    _id: 'pedido-1',
+    cotizacion: 'cotizacion-1',
+    comprador: { nombre: 'Nombre privado', telefono: '1123456789' }
+  });
+
+  assert.equal(payload.url, '/cotizaciones');
+  assert.match(payload.title, /pago/i);
+  assert.doesNotMatch(JSON.stringify(payload), /Nombre privado|1123456789/);
 });

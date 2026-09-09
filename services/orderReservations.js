@@ -109,7 +109,7 @@ async function cancelReservation(orderId) {
   try {
     await session.withTransaction(async () => {
       const order = await Pedido.findOneAndUpdate(
-        { _id: orderId, estado: 'reserva-pendiente' },
+        { _id: orderId, estado: { $in: ['reserva-pendiente', 'pago-informado'] } },
         { $set: { estado: 'cancelado' } },
         { new: true, session }
       );
@@ -129,14 +129,33 @@ async function cancelReservation(orderId) {
   }
 }
 
+async function reportOrderPayment(orderId) {
+  const order = await Pedido.findOneAndUpdate(
+    { _id: orderId, estado: 'reserva-pendiente', reservaVenceAt: { $gt: new Date() } },
+    { $set: { estado: 'pago-informado', pagoInformadoAt: new Date() } },
+    { new: true }
+  );
+  if (order) return order;
+
+  const existing = await Pedido.findById(orderId);
+  if (existing?.estado === 'pago-informado' || existing?.estado === 'pago-confirmado') return existing;
+  throw Object.assign(new Error('La reserva venció o ya no admite informar el pago'), { statusCode: 409 });
+}
+
 async function confirmOrderPayment(orderId, adminId) {
   const session = await mongoose.startSession();
   let confirmed;
   try {
     await session.withTransaction(async () => {
       const order = await Pedido.findOneAndUpdate(
-        { _id: orderId, estado: 'reserva-pendiente', reservaVenceAt: { $gt: new Date() } },
-        { $set: { estado: 'pago-confirmado' } },
+        {
+          _id: orderId,
+          $or: [
+            { estado: 'pago-informado' },
+            { estado: 'reserva-pendiente', reservaVenceAt: { $gt: new Date() } }
+          ]
+        },
+        { $set: { estado: 'pago-confirmado', pagoConfirmadoAt: new Date(), pagoConfirmadoPor: adminId } },
         { new: true, session }
       );
       if (!order) throw Object.assign(new Error('La reserva venció o ya fue procesada'), { statusCode: 409 });
@@ -163,4 +182,4 @@ async function confirmOrderPayment(orderId, adminId) {
   }
 }
 
-module.exports = { RESERVATION_MS, acceptQuote, cancelReservation, confirmOrderPayment, releaseExpiredReservations, selectedUnitPrice };
+module.exports = { RESERVATION_MS, acceptQuote, cancelReservation, confirmOrderPayment, releaseExpiredReservations, reportOrderPayment, selectedUnitPrice };

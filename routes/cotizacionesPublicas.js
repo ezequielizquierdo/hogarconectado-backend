@@ -3,7 +3,8 @@ const rateLimit = require('express-rate-limit');
 const { body, header, param, validationResult } = require('express-validator');
 const Cotizacion = require('../models/Cotizacion');
 const Pedido = require('../models/Pedido');
-const { acceptQuote, selectedUnitPrice } = require('../services/orderReservations');
+const { acceptQuote, reportOrderPayment, selectedUnitPrice } = require('../services/orderReservations');
+const { notifyPaymentReported } = require('../services/pushNotifications');
 const { hashPublicQuoteToken, isValidPublicQuoteToken } = require('../utils/publicQuoteToken');
 
 const router = express.Router();
@@ -41,7 +42,11 @@ function serializePublicQuote(quote, order) {
         : null,
     observaciones: quote.observaciones,
     aceptada: Boolean(order),
-    pedido: order ? { estado: order.estado, reservaVenceAt: order.reservaVenceAt } : null,
+    pedido: order ? {
+      estado: order.estado,
+      reservaVenceAt: order.reservaVenceAt,
+      pagoInformadoAt: order.pagoInformadoAt
+    } : null,
     enlaceVenceAt: quote.accesoPublico.venceAt
   };
 }
@@ -52,11 +57,44 @@ router.get('/:token', limiter, [param('token').custom(isValidPublicQuoteToken)],
     const quote = await findQuote(req.params.token);
     if (!quote) return res.status(404).json({ success: false, message: 'La cotización no existe o el enlace venció' });
     const order = quote.aceptacionCliente?.pedido
-      ? await Pedido.findById(quote.aceptacionCliente.pedido).select('estado reservaVenceAt').lean()
+      ? await Pedido.findById(quote.aceptacionCliente.pedido).select('estado reservaVenceAt pagoInformadoAt').lean()
       : null;
     return res.json({ success: true, data: serializePublicQuote(quote, order) });
   } catch {
     return res.status(500).json({ success: false, message: 'No pudimos cargar la cotización' });
+  }
+});
+
+router.post('/:token/informar-pago', limiter, [param('token').custom(isValidPublicQuoteToken)], async (req, res) => {
+  try {
+    if (!validationResult(req).isEmpty()) return res.status(404).json({ success: false, message: 'Cotización no encontrada' });
+    const quote = await findQuote(req.params.token);
+    if (!quote) return res.status(404).json({ success: false, message: 'La cotización no existe o el enlace venció' });
+    const order = quote.aceptacionCliente?.pedido
+      ? await Pedido.findById(quote.aceptacionCliente.pedido)
+      : null;
+    if (!order) return res.status(409).json({ success: false, message: 'Primero tenés que aceptar y reservar la cotización' });
+    const updated = await reportOrderPayment(order._id);
+    if (order.estado === 'reserva-pendiente' && updated.estado === 'pago-informado') {
+      await notifyPaymentReported(updated).catch(() => undefined);
+    }
+    return res.json({
+      success: true,
+      data: {
+        id: updated._id,
+        estado: updated.estado,
+        reservaVenceAt: updated.reservaVenceAt,
+        pagoInformadoAt: updated.pagoInformadoAt
+      },
+      message: updated.estado === 'pago-confirmado'
+        ? 'El pago ya fue confirmado.'
+        : 'Recibimos tu aviso. Verificaremos el pago a la brevedad.'
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.statusCode ? error.message : 'No pudimos informar el pago'
+    });
   }
 });
 

@@ -59,6 +59,16 @@ function buildInquiryNotificationPayload(consulta) {
   };
 }
 
+function buildPaymentReportedPayload(order) {
+  return {
+    title: 'Hay un pago para verificar',
+    body: 'Un comprador informó el pago de una cotización.',
+    tag: `pago-informado-${order._id}`,
+    url: '/cotizaciones',
+    data: { pedidoId: order._id.toString(), cotizacionId: order.cotizacion.toString() }
+  };
+}
+
 async function notifyAdminsNewInquiry(consulta) {
   if (!configureWebPush()) return { sent: 0, skipped: true };
 
@@ -74,6 +84,19 @@ async function notifyAdminsNewInquiry(consulta) {
   return sendToSubscriptions(subscriptions, payload);
 }
 
+async function notifyPaymentReported(order) {
+  if (!configureWebPush()) return { sent: 0, skipped: true };
+
+  const recipients = await Usuario.find({
+    estado: 'activo',
+    $or: [{ rol: 'admin' }, { _id: order.vendedor }]
+  }).select('_id').lean();
+  if (!recipients.length) return { sent: 0 };
+
+  const subscriptions = await PushSubscription.find({ usuario: { $in: recipients.map(user => user._id) } });
+  return sendToSubscriptions(subscriptions, buildPaymentReportedPayload(order));
+}
+
 async function sendTestNotification(usuarioId) {
   if (!configureWebPush()) return { sent: 0, skipped: true, expired: 0, failed: 0, providerStatusCodes: [] };
   const subscriptions = await PushSubscription.find({ usuario: usuarioId });
@@ -87,8 +110,10 @@ async function sendTestNotification(usuarioId) {
 
 module.exports = {
   buildInquiryNotificationPayload,
+  buildPaymentReportedPayload,
   configureWebPush,
   getPushConfig,
   notifyAdminsNewInquiry,
+  notifyPaymentReported,
   sendTestNotification
 };

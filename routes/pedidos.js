@@ -24,7 +24,7 @@ router.patch('/:id/estado', requireRoles('admin'), [
     if (!validationResult(req).isEmpty()) return res.status(400).json({ success: false, message: 'Estado inválido' });
     let order = await Pedido.findById(req.params.id);
     if (!order) return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
-    if (order.estado !== 'reserva-pendiente') return res.status(409).json({ success: false, message: 'El pedido ya fue procesado' });
+    if (!['reserva-pendiente', 'pago-informado'].includes(order.estado)) return res.status(409).json({ success: false, message: 'El pedido ya fue procesado' });
     if (req.body.estado === 'cancelado') {
       order = await cancelReservation(order._id);
     } else order = await confirmOrderPayment(order._id, req.user._id);

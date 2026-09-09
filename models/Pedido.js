@@ -20,11 +20,14 @@ const pedidoSchema = new mongoose.Schema({
   total: { type: Number, required: true, min: 0 },
   estado: {
     type: String,
-    enum: ['reserva-pendiente', 'pago-confirmado', 'cancelado', 'vencido'],
+    enum: ['reserva-pendiente', 'pago-informado', 'pago-confirmado', 'cancelado', 'vencido'],
     default: 'reserva-pendiente'
   },
   reservadoAt: { type: Date, required: true },
   reservaVenceAt: { type: Date, required: true },
+  pagoInformadoAt: Date,
+  pagoConfirmadoAt: Date,
+  pagoConfirmadoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
   idempotencyKey: { type: String, required: true, unique: true }
 }, { timestamps: true });
 
