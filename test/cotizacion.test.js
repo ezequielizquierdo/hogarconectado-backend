@@ -162,3 +162,23 @@ test('permite serializar proyecciones de producto sin ejecutar virtuales de prec
     JSON.stringify(productoProyectado.toObject({ virtuals: false }));
   });
 });
+
+test('la vista del vendedor no expone costos ni la participación interna', () => {
+  const cotizacion = makeQuote('contado');
+  cotizacion.tipoLiquidacion = 'vendedor-50-margen';
+  cotizacion.calcularTotales();
+  cotizacion.calcularResumenConfirmacion();
+
+  const payload = serializeForUser(cotizacion, { rol: 'vendedor' });
+  const detalles = payload.productos[0].detalles;
+
+  assert.equal(payload.tipoLiquidacion, undefined);
+  assert.equal(payload.resumenConfirmacion.participacionHogarConectado, undefined);
+  assert.equal(payload.resumenConfirmacion.gananciaVendedor, 30);
+  assert.equal(payload.resumenConfirmacion.dineroARendir, 230);
+  assert.equal(detalles.precioBase, undefined);
+  assert.equal(detalles.porcentajeAplicado, undefined);
+  assert.equal(detalles.precios.factura.costoBase, undefined);
+  assert.equal(detalles.precios.tresCuotas.costoBase, undefined);
+  assert.equal(detalles.precios.seisCuotas.costoBase, undefined);
+});

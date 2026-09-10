@@ -18,6 +18,14 @@ function serializeForUser(cotizacion, user) {
     // recibía objetos que terminaban convertidos en "[object Object]".
     : { ...cotizacion };
   if (user.rol !== 'vendedor') return source;
+  delete source.tipoLiquidacion;
+  if (source.resumenConfirmacion) {
+    source.resumenConfirmacion = {
+      totalVendido: source.resumenConfirmacion.totalVendido,
+      dineroARendir: source.resumenConfirmacion.dineroARendir,
+      gananciaVendedor: source.resumenConfirmacion.gananciaVendedor
+    };
+  }
   source.productos = source.productos.map(item => {
     const precios = item.detalles?.precios || {};
     return {
