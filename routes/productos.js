@@ -7,6 +7,7 @@ const Categoria = require('../models/Categoria');
 const { authenticate, optionalAuthenticate, requireRoles } = require('../middleware/auth');
 const { deleteAssets } = require('../services/imageStorage');
 const { serializeAuthenticatedProduct, serializePublicProduct, serializeSellerProduct } = require('../utils/publicProduct');
+const { buildProductSearchFilter } = require('../utils/productSearch');
 
 // GET /api/productos - Obtener todos los productos con filtros y paginación
 router.get('/', optionalAuthenticate, async (req, res) => {
@@ -63,31 +64,19 @@ router.get('/', optionalAuthenticate, async (req, res) => {
         break;
     }
 
-    let query = Producto.find(filtros)
+    const searchFilter = buscar ? buildProductSearchFilter(buscar) : null;
+    const filtrosFinales = searchFilter ? { ...filtros, ...searchFilter } : filtros;
+
+    let query = Producto.find(filtrosFinales)
       .populate('categoria', 'nombre icono')
       .sort(sortOptions)
       .skip(skip)
       .limit(limiteParsed);
 
-    // Búsqueda por texto si se proporciona
-    if (buscar) {
-      const filtrosBusqueda = {
-        ...filtros,
-        $text: { $search: buscar }
-      };
-      
-      query = Producto.find(filtrosBusqueda, { score: { $meta: 'textScore' } })
-        .populate('categoria', 'nombre icono')
-        .sort({ score: { $meta: 'textScore' } })
-        .skip(skip)
-        .limit(limiteParsed);
-    }
-
     const productos = await query;
     
     // Contar total para la paginación (usar los mismos filtros)
-    const filtrosCount = buscar ? { ...filtros, $text: { $search: buscar } } : filtros;
-    const total = await Producto.countDocuments(filtrosCount);
+    const total = await Producto.countDocuments(filtrosFinales);
     
     const totalPaginas = Math.ceil(total / limiteParsed);
     const tienePaginaAnterior = paginaParsed > 1;
