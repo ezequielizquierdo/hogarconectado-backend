@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const { selectedUnitPrice, RESERVATION_MS } = require('../services/orderReservations');
 const Pedido = require('../models/Pedido');
 const { createPublicQuoteToken, hashPublicQuoteToken, isValidPublicQuoteToken } = require('../utils/publicQuoteToken');
+const { acceptanceMessage } = require('../routes/cotizacionesPublicas');
 
 test('genera tokens públicos no reversibles con formato seguro para URL', () => {
   const token = createPublicQuoteToken();
@@ -45,4 +46,12 @@ test('el pedido admite diferenciar pago informado de pago confirmado', () => {
   };
   assert.equal(new Pedido({ ...base, estado: 'pago-informado' }).validateSync(), undefined);
   assert.equal(new Pedido({ ...base, estado: 'estado-invalido' }).validateSync()?.errors.estado.kind, 'enum');
+});
+
+test('una aceptación repetida comunica el estado real del pedido', () => {
+  assert.match(acceptanceMessage({ estado: 'reserva-pendiente' }), /ya están reservados/i);
+  assert.match(acceptanceMessage({ estado: 'pago-informado' }), /verificado/i);
+  assert.match(acceptanceMessage({ estado: 'pago-confirmado' }), /ya fue confirmado/i);
+  assert.match(acceptanceMessage({ estado: 'cancelado' }), /cancelada/i);
+  assert.match(acceptanceMessage({ estado: 'vencido' }), /venció/i);
 });

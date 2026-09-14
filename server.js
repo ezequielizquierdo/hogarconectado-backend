@@ -96,6 +96,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/hogarcone
   .then(() => {
     console.log('✅ Conectado a MongoDB');
     const { releaseExpiredReservations } = require('./services/orderReservations');
+    void releaseExpiredReservations().catch(error => console.error('Error liberando reservas vencidas al iniciar:', error.message));
     const reservationTimer = setInterval(() => {
       void releaseExpiredReservations().catch(error => console.error('Error liberando reservas vencidas:', error.message));
     }, 60 * 1000);

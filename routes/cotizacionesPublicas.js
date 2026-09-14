@@ -10,6 +10,17 @@ const { hashPublicQuoteToken, isValidPublicQuoteToken } = require('../utils/publ
 const router = express.Router();
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false });
 
+function acceptanceMessage(order) {
+  const messages = {
+    'reserva-pendiente': 'Los productos ya están reservados. El pago todavía está pendiente.',
+    'pago-informado': 'La reserva está activa y el pago está siendo verificado.',
+    'pago-confirmado': 'El pago de esta operación ya fue confirmado.',
+    cancelado: 'Esta reserva fue cancelada. Solicitá una nueva cotización para continuar.',
+    vencido: 'La reserva venció. Solicitá una nueva cotización para continuar.'
+  };
+  return messages[order.estado] || 'La cotización ya fue procesada.';
+}
+
 async function findQuote(token) {
   if (!isValidPublicQuoteToken(token)) return null;
   return Cotizacion.findOne({
@@ -112,7 +123,9 @@ router.post('/:token/aceptar', limiter, [
     return res.status(existing ? 200 : 201).json({
       success: true,
       data: { id: order._id, estado: order.estado, reservaVenceAt: order.reservaVenceAt },
-      message: 'Reservamos los productos durante 24 horas. El pago todavía está pendiente.'
+      message: existing
+        ? acceptanceMessage(order)
+        : 'Reservamos los productos durante 24 horas. El pago todavía está pendiente.'
     });
   } catch (error) {
     return res.status(error.statusCode || 500).json({
@@ -123,3 +136,4 @@ router.post('/:token/aceptar', limiter, [
 });
 
 module.exports = router;
+module.exports.acceptanceMessage = acceptanceMessage;
