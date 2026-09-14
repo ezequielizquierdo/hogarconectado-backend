@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const catalogDirectory = path.join(__dirname, '..', 'data', 'essen-catalogo-c8-2026');
+const catalogDirectory = path.join(__dirname, '..', 'data', 'essen-catalogo-c9-2026');
 const manifestPath = path.join(catalogDirectory, 'manifest.json');
 
 const formatCurrency = value => `$ ${Number(value).toLocaleString('es-AR')}`;
@@ -16,6 +16,10 @@ const validateProduct = (product, index) => {
   if (!product.categoria?.startsWith('Essen · ')) errors.push(`${label}: categoría inválida`);
   if (!Number.isFinite(product.precioBase) || product.precioBase <= 0) errors.push(`${label}: precio base inválido`);
   if (product.porcentajeGanancia !== 0) errors.push(`${label}: la ganancia debe ser 0%`);
+  if (product.especificaciones?.otros?.catalogo !== 'C9 - Septiembre 2026') errors.push(`${label}: catálogo de origen inválido`);
+  if (Math.abs(product.especificaciones?.otros?.precio12CuotasCatalogo - (product.precioBase / 12)) > 1) {
+    errors.push(`${label}: cuota de referencia inválida`);
+  }
 
   const imagePath = path.join(catalogDirectory, product.imagenLocal || '');
   if (!product.imagenLocal || !fs.existsSync(imagePath)) errors.push(`${label}: imagen ausente`);
@@ -57,4 +61,3 @@ const run = () => {
 };
 
 run();
-

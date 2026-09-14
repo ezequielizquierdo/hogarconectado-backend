@@ -1,0 +1,2390 @@
+{
+  "catalogo": "Essen C9 - 12 cuotas",
+  "actualizado": "2026-09-14",
+  "criterioPrecio": "Precio de lista; porcentaje de ganancia 0%",
+  "cantidad": 88,
+  "productos": [
+    {
+      "marca": "Essen",
+      "modelo": "ABRELATAS 5 EN 1",
+      "codigo": "60050109",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 124390,
+      "imagenLocal": "images/essen-60050109-p33.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050109",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050109",
+          "codigosEssen": [
+            "60050109"
+          ],
+          "precio12CuotasCatalogo": 10366,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 33,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "ACEITE ARBEQUINA",
+      "codigo": "67700718",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 83410,
+      "imagenLocal": "images/essen-67700718-p33.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "67700718",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "67700718",
+          "codigosEssen": [
+            "67700718"
+          ],
+          "precio12CuotasCatalogo": 6951,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 33,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "AFILADOR DE CUCHILLOS 4 PASOS",
+      "codigo": "60050204",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 98775,
+      "imagenLocal": "images/essen-60050204-p30.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050204",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050204",
+          "codigosEssen": [
+            "60050204"
+          ],
+          "precio12CuotasCatalogo": 8231,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 30,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "ASAS DE SILICONA LINEA ACERO INOXIDABLE",
+      "codigo": "60050219",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 93288,
+      "imagenLocal": "images/essen-60050219-p32.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050219",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050219",
+          "codigosEssen": [
+            "60050219"
+          ],
+          "precio12CuotasCatalogo": 7774,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 32,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "ASAS DE SILICONA NUIT",
+      "codigo": "60050174",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 93288,
+      "imagenLocal": "images/essen-60050174-p32.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050174",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050174",
+          "codigosEssen": [
+            "60050174"
+          ],
+          "precio12CuotasCatalogo": 7774,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 32,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "ASAS UNIVERSALES",
+      "codigo": "60050142",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 53751,
+      "imagenLocal": "images/essen-60050142-p35.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050142",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050142",
+          "codigosEssen": [
+            "60050186",
+            "60050142"
+          ],
+          "precio12CuotasCatalogo": 4479,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 35,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "BOMBILLA REGULABLE DE ACERO INOXIDABLE CON DIFUSOR",
+      "codigo": "60050207",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 54875,
+      "imagenLocal": "images/essen-60050207-p32.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050207",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050207",
+          "codigosEssen": [
+            "60050207"
+          ],
+          "precio12CuotasCatalogo": 4573,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 32,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "BOTELLA TERMICA 630 ML (NEGRO)",
+      "codigo": "60050211",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 111396,
+      "imagenLocal": "images/essen-60050211-p36.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050211",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050211",
+          "codigosEssen": [
+            "60050211"
+          ],
+          "precio12CuotasCatalogo": 9283,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 36,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CAFETERA ITALIANA",
+      "codigo": "60050208",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 285350,
+      "imagenLocal": "images/essen-60050208-p36.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050208",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050208",
+          "codigosEssen": [
+            "60050208"
+          ],
+          "precio12CuotasCatalogo": 23779,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 36,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CUCHILLO CARVING",
+      "codigo": "60050201",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 252425,
+      "imagenLocal": "images/essen-60050201-p30.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050201",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050201",
+          "codigosEssen": [
+            "60050201"
+          ],
+          "precio12CuotasCatalogo": 21035,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 30,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CUCHILLO CHEF",
+      "codigo": "60050184",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 268888,
+      "imagenLocal": "images/essen-60050184-p30.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050184",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050184",
+          "codigosEssen": [
+            "60050184"
+          ],
+          "precio12CuotasCatalogo": 22407,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 30,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CUCHILLO SANTOKU",
+      "codigo": "60050183",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 268888,
+      "imagenLocal": "images/essen-60050183-p30.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050183",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050183",
+          "codigosEssen": [
+            "60050183"
+          ],
+          "precio12CuotasCatalogo": 22407,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 30,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CUCHILLO UTILITY",
+      "codigo": "60050182",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 186575,
+      "imagenLocal": "images/essen-60050182-p30.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050182",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050182",
+          "codigosEssen": [
+            "60050182"
+          ],
+          "precio12CuotasCatalogo": 15548,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 30,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "ESPÁTULA Y BATIDOR DE SILICONA",
+      "codigo": "60050185",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 94475,
+      "imagenLocal": "images/essen-60050185-p35.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050185",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050185",
+          "codigosEssen": [
+            "60050161",
+            "60050185"
+          ],
+          "precio12CuotasCatalogo": 7873,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 35,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "ESTIRA MASAS",
+      "codigo": "60050165",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 71338,
+      "imagenLocal": "images/essen-60050165-p33.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050165",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050165",
+          "codigosEssen": [
+            "60050165"
+          ],
+          "precio12CuotasCatalogo": 5945,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 33,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "LIBRO: ESSEN 45 AÑOS",
+      "codigo": "60050220",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 137188,
+      "imagenLocal": "images/essen-60050220-p36.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050220",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050220",
+          "codigosEssen": [
+            "60050220"
+          ],
+          "precio12CuotasCatalogo": 11432,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 36,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "LIMPIADOR ABRILLANTADOR LIMÓN LÍNEA ACERO INOXIDABLE",
+      "codigo": "60050221",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 38412,
+      "imagenLocal": "images/essen-60050221-p37.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050221",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050221",
+          "codigosEssen": [
+            "60050221"
+          ],
+          "precio12CuotasCatalogo": 3201,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 37,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "LIMPIADOR DESENGRASANTE NARANJA 200ML + ESPONJA",
+      "codigo": "67700704",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 49388,
+      "imagenLocal": "images/essen-67700704-p37.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "67700704",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "67700704",
+          "codigosEssen": [
+            "67700704"
+          ],
+          "precio12CuotasCatalogo": 4116,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 37,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "MANDOLINA DE MANO CON SUJETADOR",
+      "codigo": "60050209",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 219500,
+      "imagenLocal": "images/essen-60050209-p36.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050209",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050209",
+          "codigosEssen": [
+            "60050209"
+          ],
+          "precio12CuotasCatalogo": 18292,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 36,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "MATE TÉRMICO",
+      "codigo": "60050197",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 109750,
+      "imagenLocal": "images/essen-60050197-p32.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050197",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050197",
+          "codigosEssen": [
+            "60050197"
+          ],
+          "precio12CuotasCatalogo": 9146,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 32,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "MULTIPROCESADOR DE VEGETALES",
+      "codigo": "60050116",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 282425,
+      "imagenLocal": "images/essen-60050116-p37.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050116",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050116",
+          "codigosEssen": [
+            "60050116"
+          ],
+          "precio12CuotasCatalogo": 23535,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 37,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "PELADOR DE VEGETALES 19CM",
+      "codigo": "60050021",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 76518,
+      "imagenLocal": "images/essen-60050021-p35.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050021",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050021",
+          "codigosEssen": [
+            "60050021"
+          ],
+          "precio12CuotasCatalogo": 6376,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 35,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "RALLADOR DE MANO GRANO FINO",
+      "codigo": "60050199",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 69142,
+      "imagenLocal": "images/essen-60050199-p31.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050199",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050199",
+          "codigosEssen": [
+            "60050199"
+          ],
+          "precio12CuotasCatalogo": 5762,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 31,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "RALLADOR DE MANO GRANO GRUESO",
+      "codigo": "60050200",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 69142,
+      "imagenLocal": "images/essen-60050200-p31.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050200",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050200",
+          "codigosEssen": [
+            "60050200"
+          ],
+          "precio12CuotasCatalogo": 5762,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 31,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "RALLADOR DE MANO GRANO MEDIO",
+      "codigo": "60050198",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 69142,
+      "imagenLocal": "images/essen-60050198-p31.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050198",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050198",
+          "codigosEssen": [
+            "60050198"
+          ],
+          "precio12CuotasCatalogo": 5762,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 31,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "RALLADOR DE MANO TIPO CINTAS",
+      "codigo": "60050205",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 98775,
+      "imagenLocal": "images/essen-60050205-p31.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050205",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050205",
+          "codigosEssen": [
+            "60050205"
+          ],
+          "precio12CuotasCatalogo": 8231,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 31,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "REBANADOR DE QUESO",
+      "codigo": "60050212",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 98775,
+      "imagenLocal": "images/essen-60050212-p36.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050212",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050212",
+          "codigosEssen": [
+            "60050212"
+          ],
+          "precio12CuotasCatalogo": 8231,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 36,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "REJILLA PARA DESMOLDAR",
+      "codigo": "60050178",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 175600,
+      "imagenLocal": "images/essen-60050178-p37.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050178",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050178",
+          "codigosEssen": [
+            "60050178"
+          ],
+          "precio12CuotasCatalogo": 14633,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 37,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SET DE UTENSILIOS DE USO GENERAL",
+      "codigo": "60050191",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 126212,
+      "imagenLocal": "images/essen-60050191-p34.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050191",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050191",
+          "codigosEssen": [
+            "60050191",
+            "60050163",
+            "60050123"
+          ],
+          "precio12CuotasCatalogo": 10518,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 34,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SET DE UTENSILIOS ESSEN",
+      "codigo": "60050222",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 252425,
+      "imagenLocal": "images/essen-60050222-p35.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050222",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050222",
+          "codigosEssen": [
+            "60050222"
+          ],
+          "precio12CuotasCatalogo": 21035,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 35,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SET DE UTENSILIOS PARA CARNES",
+      "codigo": "60050126",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 82312,
+      "imagenLocal": "images/essen-60050126-p34.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050126",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050126",
+          "codigosEssen": [
+            "60050126"
+          ],
+          "precio12CuotasCatalogo": 6859,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 34,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SET DE UTENSILIOS PARA PASTAS",
+      "codigo": "60050122",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 82312,
+      "imagenLocal": "images/essen-60050122-p34.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050122",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050122",
+          "codigosEssen": [
+            "60050122"
+          ],
+          "precio12CuotasCatalogo": 6859,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 34,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SET MATE NEO",
+      "codigo": "60050133",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 115238,
+      "imagenLocal": "images/essen-60050133-p32.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050133",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050133",
+          "codigosEssen": [
+            "60050133"
+          ],
+          "precio12CuotasCatalogo": 9603,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 32,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SET MATE NUIT",
+      "codigo": "60050177",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 115238,
+      "imagenLocal": "images/essen-60050177-p32.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050177",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050177",
+          "codigosEssen": [
+            "60050177"
+          ],
+          "precio12CuotasCatalogo": 9603,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 32,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "TABLA DE BAMBOO COCINA 30X30",
+      "codigo": "60050202",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 109750,
+      "imagenLocal": "images/essen-60050202-p31.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050202",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050202",
+          "codigosEssen": [
+            "60050202"
+          ],
+          "precio12CuotasCatalogo": 9146,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 31,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "TABLA DE BAMBOO COCINA 30X40",
+      "codigo": "60050203",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 137188,
+      "imagenLocal": "images/essen-60050203-p31.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050203",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050203",
+          "codigosEssen": [
+            "60050203"
+          ],
+          "precio12CuotasCatalogo": 11432,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 31,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "TARROS MEDIDORES APILABLES SET X3",
+      "codigo": "60050045",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 153650,
+      "imagenLocal": "images/essen-60050045-p33.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050045",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050045",
+          "codigosEssen": [
+            "60050045"
+          ],
+          "precio12CuotasCatalogo": 12804,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 33,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "TERMO ESSEN",
+      "codigo": "60050196",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 192062,
+      "imagenLocal": "images/essen-60050196-p30.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050196",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050196",
+          "codigosEssen": [
+            "60050196"
+          ],
+          "precio12CuotasCatalogo": 16005,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 30,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "VASO TÉRMICO 520ML",
+      "codigo": "60050206",
+      "categoria": "Essen · Bazar Premium",
+      "porcentajeGanancia": 0,
+      "precioBase": 120725,
+      "imagenLocal": "images/essen-60050206-p36.png",
+      "descripcion": "Producto Essen · Bazar Premium",
+      "tags": [
+        "essen",
+        "60050206",
+        "bazar premium"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050206",
+          "codigosEssen": [
+            "60050206"
+          ],
+          "precio12CuotasCatalogo": 10060,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 36,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CACEROLA 18CM BLACK",
+      "codigo": "38351872",
+      "categoria": "Essen · Black Edition",
+      "porcentajeGanancia": 0,
+      "precioBase": 488388,
+      "imagenLocal": "images/essen-38351872-p17.png",
+      "descripcion": "Producto Essen · Black Edition",
+      "tags": [
+        "essen",
+        "38351872",
+        "black edition"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38351872",
+          "codigosEssen": [
+            "38351872"
+          ],
+          "precio12CuotasCatalogo": 40699,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 17,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CACEROLA 24CM BLACK",
+      "codigo": "38452472",
+      "categoria": "Essen · Black Edition",
+      "porcentajeGanancia": 0,
+      "precioBase": 653012,
+      "imagenLocal": "images/essen-38452472-p17.png",
+      "descripcion": "Producto Essen · Black Edition",
+      "tags": [
+        "essen",
+        "38452472",
+        "black edition"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38452472",
+          "codigosEssen": [
+            "38452472"
+          ],
+          "precio12CuotasCatalogo": 54418,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 17,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "FLIP 2.2 BLACK",
+      "codigo": "38123062",
+      "categoria": "Essen · Black Edition",
+      "porcentajeGanancia": 0,
+      "precioBase": 751788,
+      "imagenLocal": "images/essen-38123062-p17.png",
+      "descripcion": "Producto Essen · Black Edition",
+      "tags": [
+        "essen",
+        "38123062",
+        "black edition"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38123062",
+          "codigosEssen": [
+            "38123062"
+          ],
+          "precio12CuotasCatalogo": 62649,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 17,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SARTÉN 24CM BLACK",
+      "codigo": "38252472",
+      "categoria": "Essen · Black Edition",
+      "porcentajeGanancia": 0,
+      "precioBase": 620088,
+      "imagenLocal": "images/essen-38252472-p17.png",
+      "descripcion": "Producto Essen · Black Edition",
+      "tags": [
+        "essen",
+        "38252472",
+        "black edition"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38252472",
+          "codigosEssen": [
+            "38252472"
+          ],
+          "precio12CuotasCatalogo": 51674,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 17,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "BIFERA CON ASAS",
+      "codigo": "38753330",
+      "categoria": "Essen · Capri",
+      "porcentajeGanancia": 0,
+      "precioBase": 488388,
+      "imagenLocal": "images/essen-38753330-p10.png",
+      "descripcion": "Producto Essen · Capri",
+      "tags": [
+        "essen",
+        "38753330",
+        "capri"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38753330",
+          "codigosEssen": [
+            "38753330"
+          ],
+          "precio12CuotasCatalogo": 40699,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 10,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CACEROLA 18CM",
+      "codigo": "38351830",
+      "categoria": "Essen · Capri",
+      "porcentajeGanancia": 0,
+      "precioBase": 488388,
+      "imagenLocal": "images/essen-38351830-p09.png",
+      "descripcion": "Producto Essen · Capri",
+      "tags": [
+        "essen",
+        "38351830",
+        "capri"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38351830",
+          "codigosEssen": [
+            "38351830"
+          ],
+          "precio12CuotasCatalogo": 40699,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 9,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CACEROLA 24CM",
+      "codigo": "38452430",
+      "categoria": "Essen · Capri",
+      "porcentajeGanancia": 0,
+      "precioBase": 653012,
+      "imagenLocal": "images/essen-38452430-p09.png",
+      "descripcion": "Producto Essen · Capri",
+      "tags": [
+        "essen",
+        "38452430",
+        "capri"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38452430",
+          "codigosEssen": [
+            "38452430"
+          ],
+          "precio12CuotasCatalogo": 54418,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 9,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CACEROLA 28CM",
+      "codigo": "38452830",
+      "categoria": "Essen · Capri",
+      "porcentajeGanancia": 0,
+      "precioBase": 845075,
+      "imagenLocal": "images/essen-38452830-p09.png",
+      "descripcion": "Producto Essen · Capri",
+      "tags": [
+        "essen",
+        "38452830",
+        "capri"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38452830",
+          "codigosEssen": [
+            "38452830"
+          ],
+          "precio12CuotasCatalogo": 70423,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 9,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CUADRADA 29CM",
+      "codigo": "38752930",
+      "categoria": "Essen · Capri",
+      "porcentajeGanancia": 0,
+      "precioBase": 993238,
+      "imagenLocal": "images/essen-38752930-p10.png",
+      "descripcion": "Producto Essen · Capri",
+      "tags": [
+        "essen",
+        "38752930",
+        "capri"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38752930",
+          "codigosEssen": [
+            "38752930"
+          ],
+          "precio12CuotasCatalogo": 82770,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 10,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "FLIP 2.2",
+      "codigo": "38123032",
+      "categoria": "Essen · Capri",
+      "porcentajeGanancia": 0,
+      "precioBase": 751788,
+      "imagenLocal": "images/essen-38123032-p09.png",
+      "descripcion": "Producto Essen · Capri",
+      "tags": [
+        "essen",
+        "38123032",
+        "capri"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38123032",
+          "codigosEssen": [
+            "38123032"
+          ],
+          "precio12CuotasCatalogo": 62649,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 9,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SARTÉN 24CM",
+      "codigo": "38252430",
+      "categoria": "Essen · Capri",
+      "porcentajeGanancia": 0,
+      "precioBase": 620088,
+      "imagenLocal": "images/essen-38252430-p09.png",
+      "descripcion": "Producto Essen · Capri",
+      "tags": [
+        "essen",
+        "38252430",
+        "capri"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38252430",
+          "codigosEssen": [
+            "38252430"
+          ],
+          "precio12CuotasCatalogo": 51674,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 9,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SARTÉN 28CM",
+      "codigo": "38252830",
+      "categoria": "Essen · Capri",
+      "porcentajeGanancia": 0,
+      "precioBase": 801175,
+      "imagenLocal": "images/essen-38252830-p09.png",
+      "descripcion": "Producto Essen · Capri",
+      "tags": [
+        "essen",
+        "38252830",
+        "capri"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38252830",
+          "codigosEssen": [
+            "38252830"
+          ],
+          "precio12CuotasCatalogo": 66765,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 9,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CACEROLA 18CM CERA FORTE",
+      "codigo": "38351825",
+      "categoria": "Essen · Cera Forte",
+      "porcentajeGanancia": 0,
+      "precioBase": 488388,
+      "imagenLocal": "images/essen-38351825-p19.png",
+      "descripcion": "Producto Essen · Cera Forte",
+      "tags": [
+        "essen",
+        "38351825",
+        "cera forte"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38351825",
+          "codigosEssen": [
+            "38351825"
+          ],
+          "precio12CuotasCatalogo": 40699,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 19,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CACEROLA 24CM CERA FORTE",
+      "codigo": "38452425",
+      "categoria": "Essen · Cera Forte",
+      "porcentajeGanancia": 0,
+      "precioBase": 653012,
+      "imagenLocal": "images/essen-38452425-p19.png",
+      "descripcion": "Producto Essen · Cera Forte",
+      "tags": [
+        "essen",
+        "38452425",
+        "cera forte"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38452425",
+          "codigosEssen": [
+            "38452425"
+          ],
+          "precio12CuotasCatalogo": 54418,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 19,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "FLIP 2.2 CERA FORTE",
+      "codigo": "38123031",
+      "categoria": "Essen · Cera Forte",
+      "porcentajeGanancia": 0,
+      "precioBase": 751788,
+      "imagenLocal": "images/essen-38123031-p19.png",
+      "descripcion": "Producto Essen · Cera Forte",
+      "tags": [
+        "essen",
+        "38123031",
+        "cera forte"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38123031",
+          "codigosEssen": [
+            "38123031"
+          ],
+          "precio12CuotasCatalogo": 62649,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 19,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SARTÉN 24CM CERA FORTE",
+      "codigo": "38252425",
+      "categoria": "Essen · Cera Forte",
+      "porcentajeGanancia": 0,
+      "precioBase": 620088,
+      "imagenLocal": "images/essen-38252425-p19.png",
+      "descripcion": "Producto Essen · Cera Forte",
+      "tags": [
+        "essen",
+        "38252425",
+        "cera forte"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38252425",
+          "codigosEssen": [
+            "38252425"
+          ],
+          "precio12CuotasCatalogo": 51674,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 19,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "BUDINERAS TERRA X2 28-30 CM",
+      "codigo": "38802184",
+      "categoria": "Essen · Complementos",
+      "porcentajeGanancia": 0,
+      "precioBase": 290838,
+      "imagenLocal": "images/essen-38802184-p28.png",
+      "descripcion": "Producto Essen · Complementos",
+      "tags": [
+        "essen",
+        "38802184",
+        "complementos"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38802184",
+          "codigosEssen": [
+            "38802184"
+          ],
+          "precio12CuotasCatalogo": 24236,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 28,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CESTILLO MULTIFUNCIÓN DE ACERO INOXIDABLE",
+      "codigo": "38891124",
+      "categoria": "Essen · Complementos",
+      "porcentajeGanancia": 0,
+      "precioBase": 246938,
+      "imagenLocal": "images/essen-38891124-p28.png",
+      "descripcion": "Producto Essen · Complementos",
+      "tags": [
+        "essen",
+        "38891124",
+        "complementos"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38891124",
+          "codigosEssen": [
+            "38891124"
+          ],
+          "precio12CuotasCatalogo": 20578,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 28,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SAVARÍN 18CM ROSA/TERRA",
+      "codigo": "38801539",
+      "categoria": "Essen · Complementos",
+      "porcentajeGanancia": 0,
+      "precioBase": 142675,
+      "imagenLocal": "images/essen-38801539-p27.png",
+      "descripcion": "Producto Essen · Complementos",
+      "tags": [
+        "essen",
+        "38801539",
+        "complementos"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38801539",
+          "codigosEssen": [
+            "38801539"
+          ],
+          "precio12CuotasCatalogo": 11890,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 27,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SAVARÍN 18CM TERRA",
+      "codigo": "38801585",
+      "categoria": "Essen · Complementos",
+      "porcentajeGanancia": 0,
+      "precioBase": 142675,
+      "imagenLocal": "images/essen-38801585-p27.png",
+      "descripcion": "Producto Essen · Complementos",
+      "tags": [
+        "essen",
+        "38801585",
+        "complementos"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38801585",
+          "codigosEssen": [
+            "38801585"
+          ],
+          "precio12CuotasCatalogo": 11890,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 27,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SAVARÍN 24CM FANTASY",
+      "codigo": "38802427",
+      "categoria": "Essen · Complementos",
+      "porcentajeGanancia": 0,
+      "precioBase": 192062,
+      "imagenLocal": "images/essen-38802427-p27.png",
+      "descripcion": "Producto Essen · Complementos",
+      "tags": [
+        "essen",
+        "38802427",
+        "complementos"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38802427",
+          "codigosEssen": [
+            "38802427"
+          ],
+          "precio12CuotasCatalogo": 16005,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 27,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SAVARÍN 24CM ROSA",
+      "codigo": "38801339",
+      "categoria": "Essen · Complementos",
+      "porcentajeGanancia": 0,
+      "precioBase": 192062,
+      "imagenLocal": "images/essen-38801339-p27.png",
+      "descripcion": "Producto Essen · Complementos",
+      "tags": [
+        "essen",
+        "38801339",
+        "complementos"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38801339",
+          "codigosEssen": [
+            "38801339"
+          ],
+          "precio12CuotasCatalogo": 16005,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 27,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SAVARÍN 24CM TERRA",
+      "codigo": "38801385",
+      "categoria": "Essen · Complementos",
+      "porcentajeGanancia": 0,
+      "precioBase": 192062,
+      "imagenLocal": "images/essen-38801385-p27.png",
+      "descripcion": "Producto Essen · Complementos",
+      "tags": [
+        "essen",
+        "38801385",
+        "complementos"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38801385",
+          "codigosEssen": [
+            "38801385"
+          ],
+          "precio12CuotasCatalogo": 16005,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 27,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SOPORTE PLEGABLE TRIANGULAR",
+      "codigo": "38811400",
+      "categoria": "Essen · Complementos",
+      "porcentajeGanancia": 0,
+      "precioBase": 109750,
+      "imagenLocal": "images/essen-38811400-p28.png",
+      "descripcion": "Producto Essen · Complementos",
+      "tags": [
+        "essen",
+        "38811400",
+        "complementos"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38811400",
+          "codigosEssen": [
+            "38811400"
+          ],
+          "precio12CuotasCatalogo": 9146,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 28,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "VAPORIZADOR 18/28CM",
+      "codigo": "38802384",
+      "categoria": "Essen · Complementos",
+      "porcentajeGanancia": 0,
+      "precioBase": 246938,
+      "imagenLocal": "images/essen-38802384-p27.png",
+      "descripcion": "Producto Essen · Complementos",
+      "tags": [
+        "essen",
+        "38802384",
+        "complementos"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38802384",
+          "codigosEssen": [
+            "38802384"
+          ],
+          "precio12CuotasCatalogo": 20578,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 27,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "KAMADO",
+      "codigo": "38773248",
+      "categoria": "Essen · Especiales",
+      "porcentajeGanancia": 0,
+      "precioBase": 1097500,
+      "imagenLocal": "images/essen-38773248-p24.png",
+      "descripcion": "Producto Essen · Especiales",
+      "tags": [
+        "essen",
+        "38773248",
+        "especiales"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38773248",
+          "codigosEssen": [
+            "38773248"
+          ],
+          "precio12CuotasCatalogo": 91458,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 24,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CACEROLA 24CM INOX",
+      "codigo": "38002410",
+      "categoria": "Essen · Fusión",
+      "porcentajeGanancia": 0,
+      "precioBase": 696912,
+      "imagenLocal": "images/essen-38002410-p23.png",
+      "descripcion": "Producto Essen · Fusión",
+      "tags": [
+        "essen",
+        "38002410",
+        "fusión"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38002410",
+          "codigosEssen": [
+            "38002410"
+          ],
+          "precio12CuotasCatalogo": 58076,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 23,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SARTÉN 24CM INOX",
+      "codigo": "38002420",
+      "categoria": "Essen · Fusión",
+      "porcentajeGanancia": 0,
+      "precioBase": 658500,
+      "imagenLocal": "images/essen-38002420-p23.png",
+      "descripcion": "Producto Essen · Fusión",
+      "tags": [
+        "essen",
+        "38002420",
+        "fusión"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38002420",
+          "codigosEssen": [
+            "38002420"
+          ],
+          "precio12CuotasCatalogo": 54875,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 23,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "ANAFE A INDUCCIÓN",
+      "codigo": "60050179",
+      "categoria": "Essen · Inducción",
+      "porcentajeGanancia": 0,
+      "precioBase": 466438,
+      "imagenLocal": "images/essen-60050179-p22.png",
+      "descripcion": "Producto Essen · Inducción",
+      "tags": [
+        "essen",
+        "60050179",
+        "inducción"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "60050179",
+          "codigosEssen": [
+            "60050179"
+          ],
+          "precio12CuotasCatalogo": 38870,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 22,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CACEROLA NUIT 18CM C/TAPA DE VIDRIO",
+      "codigo": "38441893",
+      "categoria": "Essen · Nuit",
+      "porcentajeGanancia": 0,
+      "precioBase": 367662,
+      "imagenLocal": "images/essen-38441893-p21.png",
+      "descripcion": "Producto Essen · Nuit",
+      "tags": [
+        "essen",
+        "38441893",
+        "nuit"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38441893",
+          "codigosEssen": [
+            "38441893"
+          ],
+          "precio12CuotasCatalogo": 30638,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 21,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "FLIP NUIT 24CM",
+      "codigo": "38142461",
+      "categoria": "Essen · Nuit",
+      "porcentajeGanancia": 0,
+      "precioBase": 713375,
+      "imagenLocal": "images/essen-38142461-p21.png",
+      "descripcion": "Producto Essen · Nuit",
+      "tags": [
+        "essen",
+        "38142461",
+        "nuit"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38142461",
+          "codigosEssen": [
+            "38142461"
+          ],
+          "precio12CuotasCatalogo": 59448,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 21,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SET 24CM NUIT",
+      "codigo": "38941793",
+      "categoria": "Essen · Nuit",
+      "porcentajeGanancia": 0,
+      "precioBase": 905438,
+      "imagenLocal": "images/essen-38941793-p21.png",
+      "descripcion": "Producto Essen · Nuit",
+      "tags": [
+        "essen",
+        "38941793",
+        "nuit"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38941793",
+          "codigosEssen": [
+            "38941793"
+          ],
+          "precio12CuotasCatalogo": 75453,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 21,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SET 28CM NUIT",
+      "codigo": "38941593",
+      "categoria": "Essen · Nuit",
+      "porcentajeGanancia": 0,
+      "precioBase": 1174325,
+      "imagenLocal": "images/essen-38941593-p21.png",
+      "descripcion": "Producto Essen · Nuit",
+      "tags": [
+        "essen",
+        "38941593",
+        "nuit"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38941593",
+          "codigosEssen": [
+            "38941593"
+          ],
+          "precio12CuotasCatalogo": 97860,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 21,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CACEROLA 18CM ROSA",
+      "codigo": "38351829",
+      "categoria": "Essen · Rosa",
+      "porcentajeGanancia": 0,
+      "precioBase": 488388,
+      "imagenLocal": "images/essen-38351829-p15.png",
+      "descripcion": "Producto Essen · Rosa",
+      "tags": [
+        "essen",
+        "38351829",
+        "rosa"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38351829",
+          "codigosEssen": [
+            "38351829"
+          ],
+          "precio12CuotasCatalogo": 40699,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 15,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CACEROLA 24CM ROSA",
+      "codigo": "38452429",
+      "categoria": "Essen · Rosa",
+      "porcentajeGanancia": 0,
+      "precioBase": 653012,
+      "imagenLocal": "images/essen-38452429-p15.png",
+      "descripcion": "Producto Essen · Rosa",
+      "tags": [
+        "essen",
+        "38452429",
+        "rosa"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38452429",
+          "codigosEssen": [
+            "38452429"
+          ],
+          "precio12CuotasCatalogo": 54418,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 15,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "FLIP 2.2 ROSA",
+      "codigo": "38123088",
+      "categoria": "Essen · Rosa",
+      "porcentajeGanancia": 0,
+      "precioBase": 751788,
+      "imagenLocal": "images/essen-38123088-p15.png",
+      "descripcion": "Producto Essen · Rosa",
+      "tags": [
+        "essen",
+        "38123088",
+        "rosa"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38123088",
+          "codigosEssen": [
+            "38123088"
+          ],
+          "precio12CuotasCatalogo": 62649,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 15,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SARTÉN 18CM T/V ROSA",
+      "codigo": "38651829",
+      "categoria": "Essen · Rosa",
+      "porcentajeGanancia": 0,
+      "precioBase": 301812,
+      "imagenLocal": "images/essen-38651829-p15.png",
+      "descripcion": "Producto Essen · Rosa",
+      "tags": [
+        "essen",
+        "38651829",
+        "rosa"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38651829",
+          "codigosEssen": [
+            "38651829"
+          ],
+          "precio12CuotasCatalogo": 25151,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 15,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SARTÉN 24CM ROSA",
+      "codigo": "38252429",
+      "categoria": "Essen · Rosa",
+      "porcentajeGanancia": 0,
+      "precioBase": 620088,
+      "imagenLocal": "images/essen-38252429-p15.png",
+      "descripcion": "Producto Essen · Rosa",
+      "tags": [
+        "essen",
+        "38252429",
+        "rosa"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38252429",
+          "codigosEssen": [
+            "38252429"
+          ],
+          "precio12CuotasCatalogo": 51674,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 15,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "BIFERA CON ASAS",
+      "codigo": "38753366",
+      "categoria": "Essen · Terra",
+      "porcentajeGanancia": 0,
+      "precioBase": 488388,
+      "imagenLocal": "images/essen-38753366-p13.png",
+      "descripcion": "Producto Essen · Terra",
+      "tags": [
+        "essen",
+        "38753366",
+        "terra"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38753366",
+          "codigosEssen": [
+            "38753366"
+          ],
+          "precio12CuotasCatalogo": 40699,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 13,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CACEROLA 18CM",
+      "codigo": "38351866",
+      "categoria": "Essen · Terra",
+      "porcentajeGanancia": 0,
+      "precioBase": 488388,
+      "imagenLocal": "images/essen-38351866-p12.png",
+      "descripcion": "Producto Essen · Terra",
+      "tags": [
+        "essen",
+        "38351866",
+        "terra"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38351866",
+          "codigosEssen": [
+            "38351866"
+          ],
+          "precio12CuotasCatalogo": 40699,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 12,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CACEROLA 24CM",
+      "codigo": "38452466",
+      "categoria": "Essen · Terra",
+      "porcentajeGanancia": 0,
+      "precioBase": 653012,
+      "imagenLocal": "images/essen-38452466-p12.png",
+      "descripcion": "Producto Essen · Terra",
+      "tags": [
+        "essen",
+        "38452466",
+        "terra"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38452466",
+          "codigosEssen": [
+            "38452466"
+          ],
+          "precio12CuotasCatalogo": 54418,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 12,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CACEROLA 28CM",
+      "codigo": "38452866",
+      "categoria": "Essen · Terra",
+      "porcentajeGanancia": 0,
+      "precioBase": 845075,
+      "imagenLocal": "images/essen-38452866-p12.png",
+      "descripcion": "Producto Essen · Terra",
+      "tags": [
+        "essen",
+        "38452866",
+        "terra"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38452866",
+          "codigosEssen": [
+            "38452866"
+          ],
+          "precio12CuotasCatalogo": 70423,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 12,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "CUADRADA 29CM",
+      "codigo": "38752966",
+      "categoria": "Essen · Terra",
+      "porcentajeGanancia": 0,
+      "precioBase": 993238,
+      "imagenLocal": "images/essen-38752966-p13.png",
+      "descripcion": "Producto Essen · Terra",
+      "tags": [
+        "essen",
+        "38752966",
+        "terra"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38752966",
+          "codigosEssen": [
+            "38752966"
+          ],
+          "precio12CuotasCatalogo": 82770,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 13,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "FLIP 2.2",
+      "codigo": "38123018",
+      "categoria": "Essen · Terra",
+      "porcentajeGanancia": 0,
+      "precioBase": 751788,
+      "imagenLocal": "images/essen-38123018-p12.png",
+      "descripcion": "Producto Essen · Terra",
+      "tags": [
+        "essen",
+        "38123018",
+        "terra"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38123018",
+          "codigosEssen": [
+            "38123018"
+          ],
+          "precio12CuotasCatalogo": 62649,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 12,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "JARRO QUICK",
+      "codigo": "38121702",
+      "categoria": "Essen · Terra",
+      "porcentajeGanancia": 0,
+      "precioBase": 318275,
+      "imagenLocal": "images/essen-38121702-p13.png",
+      "descripcion": "Producto Essen · Terra",
+      "tags": [
+        "essen",
+        "38121702",
+        "terra"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38121702",
+          "codigosEssen": [
+            "38121702"
+          ],
+          "precio12CuotasCatalogo": 26523,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 13,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SARTÉN 24CM",
+      "codigo": "38252466",
+      "categoria": "Essen · Terra",
+      "porcentajeGanancia": 0,
+      "precioBase": 620088,
+      "imagenLocal": "images/essen-38252466-p12.png",
+      "descripcion": "Producto Essen · Terra",
+      "tags": [
+        "essen",
+        "38252466",
+        "terra"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38252466",
+          "codigosEssen": [
+            "38252466"
+          ],
+          "precio12CuotasCatalogo": 51674,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 12,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SARTÉN 28CM",
+      "codigo": "38252866",
+      "categoria": "Essen · Terra",
+      "porcentajeGanancia": 0,
+      "precioBase": 801175,
+      "imagenLocal": "images/essen-38252866-p12.png",
+      "descripcion": "Producto Essen · Terra",
+      "tags": [
+        "essen",
+        "38252866",
+        "terra"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38252866",
+          "codigosEssen": [
+            "38252866"
+          ],
+          "precio12CuotasCatalogo": 66765,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 12,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "SARTÉN EXPRESS",
+      "codigo": "38222002",
+      "categoria": "Essen · Terra",
+      "porcentajeGanancia": 0,
+      "precioBase": 241450,
+      "imagenLocal": "images/essen-38222002-p13.png",
+      "descripcion": "Producto Essen · Terra",
+      "tags": [
+        "essen",
+        "38222002",
+        "terra"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38222002",
+          "codigosEssen": [
+            "38222002"
+          ],
+          "precio12CuotasCatalogo": 20121,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 13,
+          "requiereRevisionImagen": false
+        }
+      }
+    },
+    {
+      "marca": "Essen",
+      "modelo": "WOK",
+      "codigo": "38223002",
+      "categoria": "Essen · Terra",
+      "porcentajeGanancia": 0,
+      "precioBase": 439000,
+      "imagenLocal": "images/essen-38223002-p13.png",
+      "descripcion": "Producto Essen · Terra",
+      "tags": [
+        "essen",
+        "38223002",
+        "terra"
+      ],
+      "especificaciones": {
+        "otros": {
+          "codigoEssen": "38223002",
+          "codigosEssen": [
+            "38223001",
+            "38223002",
+            "38223052"
+          ],
+          "precio12CuotasCatalogo": 36583,
+          "catalogo": "C9 - Septiembre 2026",
+          "paginaFuente": 13,
+          "requiereRevisionImagen": false
+        }
+      }
+    }
+  ]
+}

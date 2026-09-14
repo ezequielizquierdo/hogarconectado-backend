@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
 const rootDirectory = path.join(__dirname, '..');
-const catalogDirectory = path.join(rootDirectory, 'data', 'essen-catalogo-c8-2026');
+const catalogDirectory = path.join(rootDirectory, 'data', 'essen-catalogo-c9-2026');
 const manifestPath = path.join(catalogDirectory, 'manifest.json');
 const requestedEnvFile = process.env.ENV_FILE;
 const defaultEnvFile = fs.existsSync(path.join(rootDirectory, '.env.atlas')) ? '.env.atlas' : '.env';
@@ -81,13 +81,45 @@ const getOrCreateCategory = async name => {
   return { category, created: true };
 };
 
-const importProduct = async (source, category) => {
-  const existing = await Producto.findOne({
+const findExistingProduct = async (source, category) => {
+  const sameCategory = await Producto.findOne({
     marca: 'Essen',
-    modelo: source.modelo,
     categoria: category._id,
+    $or: [
+      { 'especificaciones.otros.codigoEssen': source.codigo },
+      { modelo: source.modelo },
+    ],
   });
-  if (existing) return { status: 'skipped', product: existing };
+  if (sameCategory) return sameCategory;
+
+  const sameModel = await Producto.findOne({ marca: 'Essen', modelo: source.modelo });
+  if (sameModel) return sameModel;
+
+  const sameCode = await Producto.find({
+    marca: 'Essen',
+    'especificaciones.otros.codigoEssen': source.codigo,
+  }).limit(2);
+  return sameCode.length === 1 ? sameCode[0] : null;
+};
+
+const syncProduct = async (source, category) => {
+  const existing = await findExistingProduct(source, category);
+  if (existing) {
+    existing.set({
+      categoria: category._id,
+      marca: source.marca,
+      modelo: source.modelo,
+      precioBase: source.precioBase,
+      porcentajeGanancia: 0,
+      descripcion: source.descripcion,
+      especificaciones: source.especificaciones,
+      activo: true,
+      tags: source.tags,
+    });
+    const changed = existing.isModified();
+    if (changed) await existing.save();
+    return { status: changed ? 'updated' : 'unchanged', product: existing };
+  }
 
   const imagePath = path.join(catalogDirectory, source.imagenLocal);
   const upload = await uploadBuffer(fs.readFileSync(imagePath));
@@ -119,7 +151,7 @@ const run = async () => {
   const errors = validateManifest(manifest);
   if (errors.length) throw new Error(`El manifiesto no es válido:\n${errors.join('\n')}`);
 
-  console.log(`Catálogo validado: ${manifest.productos.length} productos y 84 imágenes.`);
+  console.log(`Catálogo validado: ${manifest.productos.length} productos e imágenes.`);
 
   if (!execute) {
     console.log('Simulación completada. No se conectó a MongoDB ni se subieron imágenes.');
@@ -148,16 +180,23 @@ const run = async () => {
     if (result.created) createdCategories += 1;
   }
 
-  let createdProducts = 0;
-  let skippedProducts = 0;
+  const totals = { created: 0, updated: 0, unchanged: 0 };
+  const synchronizedIds = [];
   for (const [index, source] of manifest.productos.entries()) {
-    const result = await importProduct(source, categoryMap.get(source.categoria));
-    if (result.status === 'created') createdProducts += 1;
-    else skippedProducts += 1;
+    const result = await syncProduct(source, categoryMap.get(source.categoria));
+    totals[result.status] += 1;
+    synchronizedIds.push(result.product._id);
     console.log(`[${index + 1}/${manifest.productos.length}] ${result.status}: ${source.codigo} ${source.modelo}`);
   }
 
-  console.log(`Importación finalizada. Categorías creadas: ${createdCategories}. Productos creados: ${createdProducts}. Omitidos: ${skippedProducts}.`);
+  const retired = await Producto.updateMany({
+    _id: { $nin: synchronizedIds },
+    marca: /^Essen$/i,
+    'especificaciones.otros.catalogo': /^C8\b/,
+    activo: true,
+  }, { $set: { activo: false } });
+
+  console.log(`Actualización finalizada. Categorías creadas: ${createdCategories}. Productos creados: ${totals.created}. Actualizados: ${totals.updated}. Sin cambios: ${totals.unchanged}. Retirados del catálogo: ${retired.modifiedCount}.`);
 };
 
 run()
@@ -168,4 +207,3 @@ run()
   .finally(async () => {
     if (mongoose.connection.readyState !== 0) await mongoose.disconnect();
   });
-
