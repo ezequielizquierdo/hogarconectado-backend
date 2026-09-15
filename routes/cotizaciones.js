@@ -70,6 +70,16 @@ function getMonthRange(value) {
   return { start: new Date(year, month, 1), end: new Date(year, month + 1, 1), key: `${year}-${String(month + 1).padStart(2, '0')}` };
 }
 
+function getPreviousMonthRange(range) {
+  const start = new Date(range.start.getFullYear(), range.start.getMonth() - 1, 1);
+  return { start, end: range.start };
+}
+
+function percentageChange(current, previous) {
+  if (!previous) return current ? 100 : 0;
+  return Math.round(((current - previous) / previous) * 1000) / 10;
+}
+
 const validators = [
   body('datosContacto.nombre').trim().isLength({ min: 2, max: 100 }),
   body('datosContacto.telefono').trim().isLength({ min: 8, max: 20 }),
@@ -208,14 +218,39 @@ router.get('/estadisticas/resumen', requireRoles('editor', 'admin', 'vendedor'),
   }
 });
 
-router.get('/estadisticas/tablero', requireRoles('admin'), async (req, res) => {
+router.get('/estadisticas/tablero', requireRoles('admin', 'vendedor'), async (req, res) => {
   try {
     const range = getMonthRange(req.query.mes);
     if (!range) return res.status(400).json({ success: false, message: 'Mes inválido; usá AAAA-MM' });
-    const saleMatch = { estado: 'confirmada', confirmadaAt: { $gte: range.start, $lt: range.end } };
+    const previousRange = getPreviousMonthRange(range);
+    const ownershipFilter = buildQuoteOwnershipFilter(req.user);
+    const saleMatch = { ...ownershipFilter, estado: 'confirmada', confirmadaAt: { $gte: range.start, $lt: range.end } };
+    const previousSaleMatch = { ...ownershipFilter, estado: 'confirmada', confirmadaAt: { $gte: previousRange.start, $lt: previousRange.end } };
     const queryMatch = { createdAt: { $gte: range.start, $lt: range.end } };
-    const [ranking, vendidos, consultados, variaciones] = await Promise.all([
+    const aggregateSales = match => Cotizacion.aggregate([
+      { $match: match },
+      { $group: {
+        _id: null,
+        ventas: { $sum: 1 },
+        montoVendido: { $sum: '$resumenConfirmacion.totalVendido' },
+        ganancia: { $sum: '$resumenConfirmacion.gananciaVendedor' },
+        dineroARendir: { $sum: '$resumenConfirmacion.dineroARendir' }
+      } }
+    ]);
+    const [currentTotalsResult, previousTotalsResult, history, ranking, vendidos, consultados, variaciones] = await Promise.all([
+      aggregateSales(saleMatch),
+      aggregateSales(previousSaleMatch),
       Cotizacion.aggregate([
+        { $match: { ...ownershipFilter, estado: 'confirmada', confirmadaAt: { $gte: new Date(range.start.getFullYear(), range.start.getMonth() - 11, 1), $lt: range.end } } },
+        { $group: {
+          _id: { year: { $year: '$confirmadaAt' }, month: { $month: '$confirmadaAt' } },
+          ventas: { $sum: 1 },
+          montoVendido: { $sum: '$resumenConfirmacion.totalVendido' },
+          ganancia: { $sum: '$resumenConfirmacion.gananciaVendedor' }
+        } },
+        { $sort: { '_id.year': 1, '_id.month': 1 } }
+      ]),
+      req.user.rol === 'admin' ? Cotizacion.aggregate([
         { $match: saleMatch },
         { $group: { _id: '$creadaPor', ventas: { $sum: 1 }, montoVendido: { $sum: '$resumenConfirmacion.totalVendido' }, ganancia: { $sum: '$resumenConfirmacion.gananciaVendedor' } } },
         { $sort: { ventas: -1, montoVendido: -1 } },
@@ -223,20 +258,20 @@ router.get('/estadisticas/tablero', requireRoles('admin'), async (req, res) => {
         { $unwind: '$vendedor' },
         { $match: { 'vendedor.rol': 'vendedor' } },
         { $project: { _id: 0, vendedorId: '$_id', nombre: '$vendedor.nombre', ventas: 1, montoVendido: 1, ganancia: 1 } }
-      ]),
+      ]) : Promise.resolve([]),
       Cotizacion.aggregate([
         { $match: saleMatch }, { $unwind: '$productos' },
         { $group: { _id: '$productos.producto', marca: { $first: '$productos.detalles.marca' }, modelo: { $first: '$productos.detalles.modelo' }, unidades: { $sum: '$productos.cantidad' }, monto: { $sum: { $multiply: ['$productos.cantidad', '$productos.detalles.precios.contado'] } } } },
         { $sort: { unidades: -1, monto: -1 } }, { $limit: 10 }
       ]),
-      Consulta.aggregate([
+      req.user.rol === 'admin' ? Consulta.aggregate([
         { $match: queryMatch },
         { $project: { items: { $cond: [{ $gt: [{ $size: { $ifNull: ['$productos', []] } }, 0] }, '$productos', [{ producto: '$producto', productoSnapshot: '$productoSnapshot' }]] } } },
         { $unwind: '$items' },
         { $group: { _id: '$items.producto', marca: { $first: '$items.productoSnapshot.marca' }, modelo: { $first: '$items.productoSnapshot.modelo' }, consultas: { $sum: 1 } } },
         { $sort: { consultas: -1 } }, { $limit: 10 }
-      ]),
-      ProductoPrecioHistorial.aggregate([
+      ]) : Promise.resolve([]),
+      req.user.rol === 'admin' ? ProductoPrecioHistorial.aggregate([
         { $match: { createdAt: { $lt: range.end } } },
         { $project: { producto: 1, precios: ['$precioAnterior', '$precioNuevo'], createdAt: 1 } },
         { $unwind: '$precios' },
@@ -247,9 +282,37 @@ router.get('/estadisticas/tablero', requireRoles('admin'), async (req, res) => {
         { $lookup: { from: 'productos', localField: '_id', foreignField: '_id', as: 'producto' } },
         { $unwind: '$producto' },
         { $project: { _id: 0, productoId: '$_id', marca: '$producto.marca', modelo: '$producto.modelo', minimo: 1, maximo: 1, cambios: 1, variacionAbsoluta: 1, ultimaVariacion: 1 } }
-      ])
+      ]) : Promise.resolve([])
     ]);
-    return res.json({ success: true, data: { periodo: range.key, rankingVendedores: ranking, productosMasVendidos: vendidos, productosMasConsultados: consultados, productosMayorVariacion: variaciones } });
+    const current = currentTotalsResult[0] || { ventas: 0, montoVendido: 0, ganancia: 0, dineroARendir: 0 };
+    const previous = previousTotalsResult[0] || { ventas: 0, montoVendido: 0, ganancia: 0, dineroARendir: 0 };
+    const consultasPeriodo = req.user.rol === 'admin' ? await Consulta.countDocuments(queryMatch) : 0;
+    const consultasPrevias = req.user.rol === 'admin'
+      ? await Consulta.countDocuments({ createdAt: { $gte: previousRange.start, $lt: previousRange.end } })
+      : 0;
+    return res.json({ success: true, data: {
+      periodo: range.key,
+      resumen: {
+        ...current,
+        consultas: consultasPeriodo,
+        cambios: {
+          ventas: percentageChange(current.ventas, previous.ventas),
+          montoVendido: percentageChange(current.montoVendido, previous.montoVendido),
+          ganancia: percentageChange(current.ganancia, previous.ganancia),
+          consultas: percentageChange(consultasPeriodo, consultasPrevias)
+        }
+      },
+      historialMensual: history.map(item => ({
+        periodo: `${item._id.year}-${String(item._id.month).padStart(2, '0')}`,
+        ventas: item.ventas,
+        montoVendido: item.montoVendido,
+        ganancia: item.ganancia
+      })),
+      rankingVendedores: ranking,
+      productosMasVendidos: vendidos,
+      productosMasConsultados: consultados,
+      productosMayorVariacion: variaciones
+    } });
   } catch {
     return res.status(500).json({ success: false, message: 'No pudimos generar el tablero comercial' });
   }
@@ -511,3 +574,4 @@ router.delete('/:id', requireRoles('admin'), async (req, res) => {
 
 module.exports = router;
 module.exports.serializeForUser = serializeForUser;
+module.exports.percentageChange = percentageChange;

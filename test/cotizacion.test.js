@@ -3,7 +3,14 @@ const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 const Cotizacion = require('../models/Cotizacion');
 const Producto = require('../models/Producto');
-const { serializeForUser } = require('../routes/cotizaciones');
+const { serializeForUser, percentageChange } = require('../routes/cotizaciones');
+
+test('calcula variaciones mensuales aun cuando el período anterior no tuvo ventas', () => {
+  assert.equal(percentageChange(12, 10), 20);
+  assert.equal(percentageChange(8, 10), -20);
+  assert.equal(percentageChange(4, 0), 100);
+  assert.equal(percentageChange(0, 0), 0);
+});
 
 function makeQuote(modalidadPago) {
   return new Cotizacion({
