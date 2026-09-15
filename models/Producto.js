@@ -29,6 +29,12 @@ const productoSchema = new mongoose.Schema({
     min: [0, 'El porcentaje no puede ser negativo'],
     max: [100, 'El porcentaje no puede superar 100']
   },
+  descuento: {
+    activo: { type: Boolean, default: false },
+    porcentaje: { type: Number, min: 0, max: 90, default: 0 },
+    desde: Date,
+    hasta: Date
+  },
   tipoComercializacion: {
     type: String,
     enum: ['stock-propio', 'producto-tercero', 'venta-catalogo'],
@@ -115,10 +121,7 @@ productoSchema.virtual('nombre').get(function() {
 
 // Método virtual para obtener precio con ganancia
 productoSchema.virtual('precioConGanancia').get(function() {
-  return calculatePrices(
-    this.precioBase,
-    getProductPricingConfig(this.porcentajeGanancia, process.env)
-  ).contado;
+  return this.calcularCuotas().contado;
 });
 
 productoSchema.virtual('porcentajeGananciaAplicado').get(function() {
@@ -130,9 +133,14 @@ productoSchema.virtual('porcentajeGananciaAplicado').get(function() {
 
 // Método para calcular precio en cuotas
 productoSchema.methods.calcularCuotas = function() {
+  const descuentoVigente = this.descuento?.activo
+    && (!this.descuento.desde || this.descuento.desde <= new Date())
+    && (!this.descuento.hasta || this.descuento.hasta >= new Date())
+    ? Number(this.descuento.porcentaje || 0)
+    : 0;
   return calculatePrices(
     this.precioBase,
-    getProductPricingConfig(this.porcentajeGanancia, process.env)
+    { ...getProductPricingConfig(this.porcentajeGanancia, process.env), descuentoPorcentaje: descuentoVigente }
   );
 };
 

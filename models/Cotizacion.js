@@ -2,9 +2,11 @@ const mongoose = require('mongoose');
 
 const preciosSnapshotSchema = new mongoose.Schema({
   contado: Number,
-  factura: { costoBase: Number, unPago: Number },
-  tresCuotas: { costoBase: Number, total: Number, cuota: Number },
-  seisCuotas: { costoBase: Number, total: Number, cuota: Number }
+  contadoSinDescuento: Number,
+  descuentoPorcentaje: Number,
+  factura: { costoBase: Number, unPago: Number, sinDescuento: Number },
+  tresCuotas: { costoBase: Number, total: Number, cuota: Number, sinDescuento: Number },
+  seisCuotas: { costoBase: Number, total: Number, cuota: Number, sinDescuento: Number }
 }, { _id: false });
 
 function getSelectedUnitPrice(item, modalidadPago) {
@@ -91,6 +93,13 @@ const cotizacionSchema = new mongoose.Schema({
   },
   disponibilidadCatalogo: {
     requerida: { type: Boolean, default: false },
+    estado: {
+      type: String,
+      enum: ['pendiente', 'disponible', 'no-disponible', 'encargado', 'recibido']
+    },
+    observacion: { type: String, trim: true, maxlength: 500 },
+    actualizadaAt: Date,
+    actualizadaPor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
     confirmadaAt: Date,
     confirmadaPor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }
   },
@@ -117,6 +126,7 @@ const cotizacionSchema = new mongoose.Schema({
 
 cotizacionSchema.index({ creadaPor: 1, createdAt: -1 });
 cotizacionSchema.index({ estado: 1, createdAt: -1 });
+cotizacionSchema.index({ 'disponibilidadCatalogo.requerida': 1, 'disponibilidadCatalogo.estado': 1, createdAt: -1 });
 
 cotizacionSchema.methods.calcularTotales = function() {
   this.totales.subtotal = this.productos.reduce((total, item) => {

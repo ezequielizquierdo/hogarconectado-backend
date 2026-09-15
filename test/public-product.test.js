@@ -95,3 +95,16 @@ test('serializePublicProduct mantiene compatibilidad con productos existentes', 
   assert.equal(result.disponiblePorPedido, false);
   assert.equal(result.catalogo, undefined);
 });
+
+test('serializePublicProduct muestra una promoción sin exponer su configuración interna', () => {
+  const result = serializePublicProduct({
+    _id: 'producto-promocion', marca: 'Marca', modelo: 'Modelo',
+    calcularCuotas: () => ({ contado: 108000, contadoSinDescuento: 120000, descuentoPorcentaje: 10 })
+  });
+  assert.deepEqual(result.descuento, {
+    activo: true,
+    porcentaje: 10,
+    precioAnterior: 120000,
+    precioPromocional: 108000
+  });
+});

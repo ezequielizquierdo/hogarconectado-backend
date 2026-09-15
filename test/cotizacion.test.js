@@ -158,6 +158,17 @@ test('serializa ObjectId de cotizaciones lean como cadenas utilizables en rutas'
   assert.equal(serialized._id, quoteId);
 });
 
+test('reconoce cotizaciones históricas de catálogo como pendientes de disponibilidad', () => {
+  const quote = makeQuote('contado').toObject({ virtuals: false });
+  quote.productos[0].detalles.tipoComercializacion = 'venta-catalogo';
+  delete quote.disponibilidadCatalogo;
+
+  const result = serializeForUser(quote, { rol: 'admin' });
+
+  assert.equal(result.disponibilidadCatalogo.requerida, true);
+  assert.equal(result.disponibilidadCatalogo.estado, 'pendiente');
+});
+
 test('permite serializar proyecciones de producto sin ejecutar virtuales de precio', () => {
   const productoProyectado = new Producto({
     categoria: new mongoose.Types.ObjectId(),

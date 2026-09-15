@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const Producto = require('../models/Producto');
+const ProductoPrecioHistorial = require('../models/ProductoPrecioHistorial');
 const { getPricingConfig } = require('../utils/pricing');
 const Categoria = require('../models/Categoria');
 const { authenticate, optionalAuthenticate, requireRoles } = require('../middleware/auth');
@@ -181,6 +182,10 @@ router.post('/', authenticate, requireRoles('editor', 'admin'), [
     .optional()
     .isFloat({ min: 0, max: 100 })
     .withMessage('El porcentaje de ganancia debe estar entre 0 y 100'),
+  body('descuento.activo').optional().isBoolean(),
+  body('descuento.porcentaje').optional().isFloat({ min: 0, max: 90 }),
+  body('descuento.desde').optional({ nullable: true }).isISO8601().toDate(),
+  body('descuento.hasta').optional({ nullable: true }).isISO8601().toDate(),
   body('tipoComercializacion')
     .optional()
     .isIn(['stock-propio', 'producto-tercero', 'venta-catalogo'])
@@ -200,7 +205,11 @@ router.post('/', authenticate, requireRoles('editor', 'admin'), [
       });
     }
 
-    const { categoria, marca, modelo, precioBase, porcentajeGanancia, tipoComercializacion, catalogo, descripcion, especificaciones, tags, imagenes, imagenPublicIds, stock, activo } = req.body;
+    const { categoria, marca, modelo, precioBase, porcentajeGanancia, descuento, tipoComercializacion, catalogo, descripcion, especificaciones, tags, imagenes, imagenPublicIds, stock, activo } = req.body;
+
+    if (descuento?.desde && descuento?.hasta && descuento.desde > descuento.hasta) {
+      return res.status(400).json({ success: false, message: 'La fecha final del descuento debe ser posterior a la inicial' });
+    }
 
     if (tipoComercializacion === 'venta-catalogo' && !catalogo?.nombre?.trim()) {
       return res.status(400).json({
@@ -224,6 +233,7 @@ router.post('/', authenticate, requireRoles('editor', 'admin'), [
       modelo,
       precioBase,
       porcentajeGanancia,
+      descuento,
       tipoComercializacion,
       catalogo: tipoComercializacion === 'venta-catalogo' ? catalogo : undefined,
       descripcion,
@@ -278,6 +288,10 @@ router.put('/:id', authenticate, requireRoles('editor', 'admin'), [
     .optional()
     .isFloat({ min: 0, max: 100 })
     .withMessage('El porcentaje de ganancia debe estar entre 0 y 100'),
+  body('descuento.activo').optional().isBoolean(),
+  body('descuento.porcentaje').optional().isFloat({ min: 0, max: 90 }),
+  body('descuento.desde').optional({ nullable: true }).isISO8601().toDate(),
+  body('descuento.hasta').optional({ nullable: true }).isISO8601().toDate(),
   body('tipoComercializacion')
     .optional()
     .isIn(['stock-propio', 'producto-tercero', 'venta-catalogo'])
@@ -301,6 +315,10 @@ router.put('/:id', authenticate, requireRoles('editor', 'admin'), [
     if (!productoAnterior) {
       return res.status(404).json({ success: false, message: 'Producto no encontrado' });
     }
+    const descuentoResultante = { ...(productoAnterior.descuento?.toObject?.() || {}), ...(req.body.descuento || {}) };
+    if (descuentoResultante.desde && descuentoResultante.hasta && descuentoResultante.desde > descuentoResultante.hasta) {
+      return res.status(400).json({ success: false, message: 'La fecha final del descuento debe ser posterior a la inicial' });
+    }
 
     const tipoResultante = req.body.tipoComercializacion || productoAnterior.tipoComercializacion || 'stock-propio';
     const catalogoAnterior = productoAnterior.catalogo?.toObject?.() || productoAnterior.catalogo || {};
@@ -322,6 +340,16 @@ router.put('/:id', authenticate, requireRoles('editor', 'admin'), [
       actualizacion,
       { new: true, runValidators: true }
     ).populate('categoria', 'nombre icono');
+
+    if (req.body.precioBase !== undefined && Number(req.body.precioBase) !== Number(productoAnterior.precioBase)) {
+      await ProductoPrecioHistorial.create({
+        producto: producto._id,
+        precioAnterior: productoAnterior.precioBase,
+        precioNuevo: producto.precioBase,
+        cambiadoPor: req.user._id,
+        origen: 'edicion-manual'
+      });
+    }
 
     const idsActuales = new Set(req.body.imagenPublicIds || productoAnterior.imagenPublicIds || []);
     const idsRemovidos = (productoAnterior.imagenPublicIds || []).filter(id => !idsActuales.has(id));

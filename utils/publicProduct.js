@@ -12,6 +12,8 @@ function serializePublicProduct(product) {
         plazoEntrega: source.catalogo?.plazoEntrega
       }
     : undefined;
+  const prices = typeof product?.calcularCuotas === 'function' ? product.calcularCuotas() : source.precios;
+  const descuentoActivo = Number(prices?.descuentoPorcentaje || 0) > 0;
 
   return {
     _id: source._id,
@@ -22,6 +24,12 @@ function serializePublicProduct(product) {
     imagenes: source.imagenes || [],
     stock: source.stock,
     precioConGanancia: source.precioConGanancia,
+    descuento: descuentoActivo ? {
+      activo: true,
+      porcentaje: prices.descuentoPorcentaje,
+      precioAnterior: prices.contadoSinDescuento,
+      precioPromocional: prices.contado
+    } : undefined,
     tipoComercializacion,
     catalogo,
     disponiblePorPedido: tipoComercializacion === 'venta-catalogo'

@@ -47,6 +47,8 @@ function calculatePrices(precioBase, config = DEFAULT_PRICING) {
   }
 
   const contado = base * (1 + config.ganancia);
+  const descuentoPorcentaje = Math.min(90, parseNonNegativeNumber(config.descuentoPorcentaje, 0));
+  const factorDescuento = 1 - descuentoPorcentaje / 100;
   const factorFactura = parseNonNegativeNumber(
     config.factorFactura,
     DEFAULT_PRICING.factorFactura
@@ -54,24 +56,30 @@ function calculatePrices(precioBase, config = DEFAULT_PRICING) {
   const costoFacturado = base * factorFactura;
   const costo3 = base * config.factor3Cuotas;
   const costo6 = base * config.factor6Cuotas;
-  const total3 = contado * config.factor3Cuotas;
-  const total6 = contado * config.factor6Cuotas;
+  const total3SinDescuento = contado * config.factor3Cuotas;
+  const total6SinDescuento = contado * config.factor6Cuotas;
+  const facturaSinDescuento = costoFacturado * (1 + config.ganancia);
 
   return {
-    contado,
+    contado: contado * factorDescuento,
+    contadoSinDescuento: contado,
+    descuentoPorcentaje,
     factura: {
       costoBase: costoFacturado,
-      unPago: costoFacturado * (1 + config.ganancia)
+      unPago: facturaSinDescuento * factorDescuento,
+      sinDescuento: facturaSinDescuento
     },
     tresCuotas: {
       costoBase: costo3,
-      total: total3,
-      cuota: total3 / 3
+      total: total3SinDescuento * factorDescuento,
+      cuota: total3SinDescuento * factorDescuento / 3,
+      sinDescuento: total3SinDescuento
     },
     seisCuotas: {
       costoBase: costo6,
-      total: total6,
-      cuota: total6 / 6
+      total: total6SinDescuento * factorDescuento,
+      cuota: total6SinDescuento * factorDescuento / 6,
+      sinDescuento: total6SinDescuento
     }
   };
 }

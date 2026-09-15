@@ -45,6 +45,23 @@ test('calcula contado, totales y valores por cuota', () => {
   assertClose(prices.seisCuotas.cuota, 156883.65);
 });
 
+test('aplica el descuento al precio de venta y conserva el valor anterior', () => {
+  const prices = calculatePrices(100000, {
+    ganancia: 0.20,
+    factorFactura: 1.05,
+    factor3Cuotas: 1.10,
+    factor6Cuotas: 1.20,
+    descuentoPorcentaje: 10
+  });
+  assert.equal(prices.descuentoPorcentaje, 10);
+  assert.equal(prices.contadoSinDescuento, 120000);
+  assert.equal(prices.contado, 108000);
+  assert.equal(prices.factura.sinDescuento, 126000);
+  assert.equal(prices.factura.unPago, 113400);
+  assert.equal(prices.tresCuotas.sinDescuento, 132000);
+  assert.equal(prices.tresCuotas.total, 118800);
+});
+
 test('reproduce el desglose de la fila de referencia del Excel', () => {
   const prices = calculateDetailedPrices(705000, {
     ganancia: 0.10,
