@@ -29,6 +29,33 @@ const productoSchema = new mongoose.Schema({
     min: [0, 'El porcentaje no puede ser negativo'],
     max: [100, 'El porcentaje no puede superar 100']
   },
+  tipoComercializacion: {
+    type: String,
+    enum: ['stock-propio', 'producto-tercero', 'venta-catalogo'],
+    default: 'stock-propio',
+    index: true
+  },
+  catalogo: {
+    nombre: {
+      type: String,
+      trim: true,
+      required: [function() {
+        return this.tipoComercializacion === 'venta-catalogo';
+      }, 'El nombre del catálogo es requerido para una venta por catálogo'],
+      maxlength: [100, 'El nombre del catálogo no puede exceder 100 caracteres']
+    },
+    campania: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'La campaña no puede exceder 100 caracteres']
+    },
+    vigenciaHasta: Date,
+    plazoEntrega: {
+      type: String,
+      trim: true,
+      maxlength: [120, 'El plazo de entrega no puede exceder 120 caracteres']
+    }
+  },
   descripcion: {
     type: String,
     trim: true,
@@ -65,6 +92,13 @@ productoSchema.index({ marca: 1 });
 productoSchema.index({ modelo: 1 });
 productoSchema.index({ activo: 1 });
 productoSchema.index({ 'stock.disponible': 1 });
+
+productoSchema.pre('validate', function(next) {
+  if (this.tipoComercializacion === 'venta-catalogo' && !this.catalogo?.nombre?.trim()) {
+    this.invalidate('catalogo.nombre', 'El nombre del catálogo es requerido para una venta por catálogo');
+  }
+  next();
+});
 
 // Índice de texto completo para búsquedas
 productoSchema.index({

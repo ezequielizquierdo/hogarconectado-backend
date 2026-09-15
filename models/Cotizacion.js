@@ -51,6 +51,16 @@ const cotizacionSchema = new mongoose.Schema({
       categoria: String,
       marca: String,
       modelo: String,
+      tipoComercializacion: {
+        type: String,
+        enum: ['stock-propio', 'producto-tercero', 'venta-catalogo']
+      },
+      catalogo: {
+        nombre: String,
+        campania: String,
+        vigenciaHasta: Date,
+        plazoEntrega: String
+      },
       precioBase: Number,
       porcentajeAplicado: Number,
       precios: preciosSnapshotSchema

@@ -31,6 +31,16 @@ const run = () => {
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   const products = manifest.productos || [];
   const errors = products.flatMap(validateProduct);
+
+  if (manifest.tipoComercializacion !== 'venta-catalogo') {
+    errors.push('El tipo de comercialización debe ser venta-catalogo');
+  }
+  if (!manifest.datosCatalogo?.nombre?.trim()) {
+    errors.push('Falta el nombre comercial del catálogo');
+  }
+  if (!manifest.datosCatalogo?.campania?.trim()) {
+    errors.push('Falta la campaña del catálogo');
+  }
   const categories = products.reduce((result, product) => {
     result[product.categoria] = (result[product.categoria] || 0) + 1;
     return result;
@@ -39,6 +49,7 @@ const run = () => {
   const reviewImages = products.filter(product => product.especificaciones?.otros?.requiereRevisionImagen);
 
   console.log(`Catálogo: ${manifest.catalogo}`);
+  console.log(`Tipo comercial: ${manifest.tipoComercializacion} · ${manifest.datosCatalogo?.nombre} · ${manifest.datosCatalogo?.campania}`);
   console.log(`Productos: ${products.length}`);
   console.log(`Rango de precios: ${formatCurrency(Math.min(...products.map(product => product.precioBase)))} a ${formatCurrency(Math.max(...products.map(product => product.precioBase)))}`);
   Object.entries(categories).forEach(([category, count]) => console.log(`- ${category}: ${count}`));

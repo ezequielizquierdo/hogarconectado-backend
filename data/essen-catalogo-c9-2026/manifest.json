@@ -1,5 +1,10 @@
 {
   "catalogo": "Essen C9 - 12 cuotas",
+  "tipoComercializacion": "venta-catalogo",
+  "datosCatalogo": {
+    "nombre": "Essen",
+    "campania": "C9 - Septiembre 2026"
+  },
   "actualizado": "2026-09-14",
   "criterioPrecio": "Precio de lista; porcentaje de ganancia 0%",
   "cantidad": 88,

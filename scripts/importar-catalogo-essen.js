@@ -27,6 +27,16 @@ const validateManifest = manifest => {
   const products = manifest.productos || [];
   const errors = [];
 
+  if (manifest.tipoComercializacion !== 'venta-catalogo') {
+    errors.push('El tipo de comercialización debe ser venta-catalogo');
+  }
+  if (!manifest.datosCatalogo?.nombre?.trim()) {
+    errors.push('Falta el nombre comercial del catálogo');
+  }
+  if (!manifest.datosCatalogo?.campania?.trim()) {
+    errors.push('Falta la campaña del catálogo');
+  }
+
   if (!products.length || products.length !== manifest.cantidad) {
     errors.push('La cantidad declarada no coincide con los productos del manifiesto');
   }
@@ -102,7 +112,7 @@ const findExistingProduct = async (source, category) => {
   return sameCode.length === 1 ? sameCode[0] : null;
 };
 
-const syncProduct = async (source, category) => {
+const syncProduct = async (source, category, commercialData) => {
   const existing = await findExistingProduct(source, category);
   if (existing) {
     existing.set({
@@ -111,6 +121,8 @@ const syncProduct = async (source, category) => {
       modelo: source.modelo,
       precioBase: source.precioBase,
       porcentajeGanancia: 0,
+      tipoComercializacion: commercialData.tipoComercializacion,
+      catalogo: commercialData.catalogo,
       descripcion: source.descripcion,
       especificaciones: source.especificaciones,
       activo: true,
@@ -131,6 +143,8 @@ const syncProduct = async (source, category) => {
       modelo: source.modelo,
       precioBase: source.precioBase,
       porcentajeGanancia: 0,
+      tipoComercializacion: commercialData.tipoComercializacion,
+      catalogo: commercialData.catalogo,
       descripcion: source.descripcion,
       imagenes: [upload.url],
       imagenPublicIds: [upload.publicId],
@@ -152,6 +166,7 @@ const run = async () => {
   if (errors.length) throw new Error(`El manifiesto no es válido:\n${errors.join('\n')}`);
 
   console.log(`Catálogo validado: ${manifest.productos.length} productos e imágenes.`);
+  console.log(`Clasificación comercial: ${manifest.datosCatalogo.nombre} · ${manifest.datosCatalogo.campania}.`);
 
   if (!execute) {
     console.log('Simulación completada. No se conectó a MongoDB ni se subieron imágenes.');
@@ -182,8 +197,15 @@ const run = async () => {
 
   const totals = { created: 0, updated: 0, unchanged: 0 };
   const synchronizedIds = [];
+  const commercialData = {
+    tipoComercializacion: manifest.tipoComercializacion,
+    catalogo: {
+      nombre: manifest.datosCatalogo.nombre.trim(),
+      campania: manifest.datosCatalogo.campania.trim(),
+    },
+  };
   for (const [index, source] of manifest.productos.entries()) {
-    const result = await syncProduct(source, categoryMap.get(source.categoria));
+    const result = await syncProduct(source, categoryMap.get(source.categoria), commercialData);
     totals[result.status] += 1;
     synchronizedIds.push(result.product._id);
     console.log(`[${index + 1}/${manifest.productos.length}] ${result.status}: ${source.codigo} ${source.modelo}`);

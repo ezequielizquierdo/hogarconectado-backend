@@ -34,6 +34,10 @@ function serializeForUser(cotizacion, user) {
         categoria: item.detalles?.categoria,
         marca: item.detalles?.marca,
         modelo: item.detalles?.modelo,
+        tipoComercializacion: item.detalles?.tipoComercializacion || 'stock-propio',
+        catalogo: item.detalles?.tipoComercializacion === 'venta-catalogo'
+          ? item.detalles?.catalogo
+          : undefined,
         precios: {
           contado: precios.contado,
           factura: { unPago: precios.factura?.unPago },
@@ -109,6 +113,15 @@ router.post('/', validators, async (req, res) => {
             categoria: producto.categoria.nombre,
             marca: producto.marca,
             modelo: producto.modelo,
+            tipoComercializacion: producto.tipoComercializacion || 'stock-propio',
+            catalogo: producto.tipoComercializacion === 'venta-catalogo'
+              ? {
+                  nombre: producto.catalogo?.nombre,
+                  campania: producto.catalogo?.campania,
+                  vigenciaHasta: producto.catalogo?.vigenciaHasta,
+                  plazoEntrega: producto.catalogo?.plazoEntrega
+                }
+              : undefined,
             precioBase: producto.precioBase,
             porcentajeAplicado,
             precios

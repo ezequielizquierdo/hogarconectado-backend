@@ -39,6 +39,16 @@ function serializePublicQuote(quote, order) {
     productos: quote.productos.map(item => ({
       marca: item.detalles.marca,
       modelo: item.detalles.modelo,
+      tipoComercializacion: item.detalles.tipoComercializacion || 'stock-propio',
+      catalogo: item.detalles.tipoComercializacion === 'venta-catalogo'
+        ? {
+            nombre: item.detalles.catalogo?.nombre,
+            campania: item.detalles.catalogo?.campania,
+            vigenciaHasta: item.detalles.catalogo?.vigenciaHasta,
+            plazoEntrega: item.detalles.catalogo?.plazoEntrega
+          }
+        : undefined,
+      disponiblePorPedido: item.detalles.tipoComercializacion === 'venta-catalogo',
       cantidad: item.cantidad,
       imagen: item.producto?.imagenes?.[0],
       precioUnitario: selectedUnitPrice(item, quote.modalidadPago),

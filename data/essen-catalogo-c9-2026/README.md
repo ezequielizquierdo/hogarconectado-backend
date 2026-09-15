@@ -8,6 +8,10 @@ productos vigentes, sus imágenes y un manifiesto validable antes de sincronizar
 - `precioBase` usa el precio de lista publicado por Essen.
 - `porcentajeGanancia` es `0`, para que el precio visible no vuelva a incrementarse.
 - `precio12CuotasCatalogo` conserva la cuota de referencia publicada.
+- Todos los artículos se identifican como `venta-catalogo`, bajo la campaña
+  `Essen · C9 - Septiembre 2026`, para distinguirlos del stock propio.
+- La vigencia y el plazo de entrega quedan sin informar hasta contar con datos
+  oficiales; no se inventan fechas ni promesas comerciales.
 - Los combos y promociones generales de las páginas 4 a 7 y 25 no forman parte
   del catálogo permanente.
 - El stock de productos existentes se conserva. Los productos nuevos comienzan

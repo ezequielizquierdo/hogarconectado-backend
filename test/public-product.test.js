@@ -64,3 +64,34 @@ test('serializeSellerProduct permite cotizar sin exponer costos ni porcentaje', 
   assert.equal('porcentajeGanancia' in result, false);
   assert.equal('imagenPublicIds' in result, false);
 });
+
+test('serializePublicProduct identifica una venta por catálogo sin exponer datos internos', () => {
+  const result = serializePublicProduct({
+    _id: 'producto-catalogo',
+    marca: 'Essen',
+    modelo: 'Cacerola 24 cm',
+    precioConGanancia: 200000,
+    tipoComercializacion: 'venta-catalogo',
+    catalogo: {
+      nombre: 'Essen',
+      campania: 'C9',
+      vigenciaHasta: new Date('2026-09-30T23:59:59.000Z'),
+      plazoEntrega: '7 a 15 días',
+      responsable: 'dato-interno'
+    },
+    precioBase: 150000
+  });
+
+  assert.equal(result.tipoComercializacion, 'venta-catalogo');
+  assert.equal(result.disponiblePorPedido, true);
+  assert.deepEqual(Object.keys(result.catalogo).sort(), ['campania', 'nombre', 'plazoEntrega', 'vigenciaHasta']);
+  assert.equal('precioBase' in result, false);
+  assert.equal('responsable' in result.catalogo, false);
+});
+
+test('serializePublicProduct mantiene compatibilidad con productos existentes', () => {
+  const result = serializePublicProduct({ _id: 'producto-actual', marca: 'Marca', modelo: 'Modelo' });
+  assert.equal(result.tipoComercializacion, 'stock-propio');
+  assert.equal(result.disponiblePorPedido, false);
+  assert.equal(result.catalogo, undefined);
+});

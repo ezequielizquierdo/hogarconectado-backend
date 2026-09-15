@@ -3,6 +3,16 @@ function serializePublicProduct(product) {
     ? product.toObject({ virtuals: true })
     : product;
 
+  const tipoComercializacion = source.tipoComercializacion || 'stock-propio';
+  const catalogo = tipoComercializacion === 'venta-catalogo'
+    ? {
+        nombre: source.catalogo?.nombre,
+        campania: source.catalogo?.campania,
+        vigenciaHasta: source.catalogo?.vigenciaHasta,
+        plazoEntrega: source.catalogo?.plazoEntrega
+      }
+    : undefined;
+
   return {
     _id: source._id,
     categoria: source.categoria,
@@ -11,7 +21,10 @@ function serializePublicProduct(product) {
     descripcion: source.descripcion,
     imagenes: source.imagenes || [],
     stock: source.stock,
-    precioConGanancia: source.precioConGanancia
+    precioConGanancia: source.precioConGanancia,
+    tipoComercializacion,
+    catalogo,
+    disponiblePorPedido: tipoComercializacion === 'venta-catalogo'
   };
 }
 

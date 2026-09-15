@@ -15,6 +15,7 @@ router.get('/', optionalAuthenticate, async (req, res) => {
     const {
       categoria,
       marca,
+      tipoComercializacion,
       disponible = 'true',
       limite = 20, // Límite más conservador para mejor rendimiento
       pagina = 1,
@@ -31,6 +32,14 @@ router.get('/', optionalAuthenticate, async (req, res) => {
     
     if (categoria) filtros.categoria = categoria;
     if (marca) filtros.marca = new RegExp(marca, 'i');
+    if (tipoComercializacion === 'stock-propio') {
+      filtros.$or = [
+        { tipoComercializacion: 'stock-propio' },
+        { tipoComercializacion: { $exists: false } }
+      ];
+    } else if (tipoComercializacion) {
+      filtros.tipoComercializacion = tipoComercializacion;
+    }
     
     // Temporalmente removido el filtro de stock para debugging
     // if (disponible === 'true') {
@@ -104,6 +113,7 @@ router.get('/', optionalAuthenticate, async (req, res) => {
       filtros: {
         categoria,
         marca,
+        tipoComercializacion,
         disponible,
         buscar,
         ordenar
@@ -170,7 +180,15 @@ router.post('/', authenticate, requireRoles('editor', 'admin'), [
   body('porcentajeGanancia')
     .optional()
     .isFloat({ min: 0, max: 100 })
-    .withMessage('El porcentaje de ganancia debe estar entre 0 y 100')
+    .withMessage('El porcentaje de ganancia debe estar entre 0 y 100'),
+  body('tipoComercializacion')
+    .optional()
+    .isIn(['stock-propio', 'producto-tercero', 'venta-catalogo'])
+    .withMessage('Tipo de comercialización inválido'),
+  body('catalogo.nombre').optional().trim().isLength({ min: 1, max: 100 }),
+  body('catalogo.campania').optional().trim().isLength({ min: 1, max: 100 }),
+  body('catalogo.vigenciaHasta').optional({ nullable: true }).isISO8601().toDate(),
+  body('catalogo.plazoEntrega').optional().trim().isLength({ min: 1, max: 120 })
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -182,7 +200,14 @@ router.post('/', authenticate, requireRoles('editor', 'admin'), [
       });
     }
 
-    const { categoria, marca, modelo, precioBase, porcentajeGanancia, descripcion, especificaciones, tags, imagenes, imagenPublicIds, stock, activo } = req.body;
+    const { categoria, marca, modelo, precioBase, porcentajeGanancia, tipoComercializacion, catalogo, descripcion, especificaciones, tags, imagenes, imagenPublicIds, stock, activo } = req.body;
+
+    if (tipoComercializacion === 'venta-catalogo' && !catalogo?.nombre?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'El nombre del catálogo es requerido para una venta por catálogo'
+      });
+    }
 
     // Verificar que la categoría existe
     const categoriaExiste = await Categoria.findById(categoria);
@@ -199,6 +224,8 @@ router.post('/', authenticate, requireRoles('editor', 'admin'), [
       modelo,
       precioBase,
       porcentajeGanancia,
+      tipoComercializacion,
+      catalogo: tipoComercializacion === 'venta-catalogo' ? catalogo : undefined,
       descripcion,
       especificaciones,
       tags: tags || [],
@@ -250,7 +277,15 @@ router.put('/:id', authenticate, requireRoles('editor', 'admin'), [
   body('porcentajeGanancia')
     .optional()
     .isFloat({ min: 0, max: 100 })
-    .withMessage('El porcentaje de ganancia debe estar entre 0 y 100')
+    .withMessage('El porcentaje de ganancia debe estar entre 0 y 100'),
+  body('tipoComercializacion')
+    .optional()
+    .isIn(['stock-propio', 'producto-tercero', 'venta-catalogo'])
+    .withMessage('Tipo de comercialización inválido'),
+  body('catalogo.nombre').optional().trim().isLength({ min: 1, max: 100 }),
+  body('catalogo.campania').optional().trim().isLength({ min: 1, max: 100 }),
+  body('catalogo.vigenciaHasta').optional({ nullable: true }).isISO8601().toDate(),
+  body('catalogo.plazoEntrega').optional().trim().isLength({ min: 1, max: 120 })
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -267,9 +302,24 @@ router.put('/:id', authenticate, requireRoles('editor', 'admin'), [
       return res.status(404).json({ success: false, message: 'Producto no encontrado' });
     }
 
+    const tipoResultante = req.body.tipoComercializacion || productoAnterior.tipoComercializacion || 'stock-propio';
+    const catalogoAnterior = productoAnterior.catalogo?.toObject?.() || productoAnterior.catalogo || {};
+    const catalogoResultante = { ...catalogoAnterior, ...(req.body.catalogo || {}) };
+    if (tipoResultante === 'venta-catalogo' && !catalogoResultante?.nombre?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'El nombre del catálogo es requerido para una venta por catálogo'
+      });
+    }
+
+    const cambios = { ...req.body };
+    const actualizacion = tipoResultante === 'venta-catalogo'
+      ? { $set: { ...cambios, catalogo: catalogoResultante } }
+      : { $set: cambios, $unset: { catalogo: 1 } };
+
     const producto = await Producto.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      actualizacion,
       { new: true, runValidators: true }
     ).populate('categoria', 'nombre icono');
 
