@@ -89,6 +89,11 @@ const cotizacionSchema = new mongoose.Schema({
     aceptadaAt: Date,
     pedido: { type: mongoose.Schema.Types.ObjectId, ref: 'Pedido' }
   },
+  disponibilidadCatalogo: {
+    requerida: { type: Boolean, default: false },
+    confirmadaAt: Date,
+    confirmadaPor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }
+  },
   confirmadaPor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
   confirmadaAt: Date,
   resumenConfirmacion: {
@@ -163,8 +168,12 @@ cotizacionSchema.methods.generarMensajeWhatsApp = function() {
     : this.modalidadPago === '6-cuotas'
       ? `\n6 cuotas de $${(total / 6).toLocaleString('es-AR')}`
       : '';
+  const incluyeCatalogo = this.productos.some(item => item.detalles?.tipoComercializacion === 'venta-catalogo');
+  const avisoCatalogo = incluyeCatalogo
+    ? '\n\n📦 Los productos de catálogo están sujetos a confirmación de disponibilidad y plazo de entrega.'
+    : '';
 
-  return `🏠 *Hogar Conectado*\n\n*Cotización para ${this.datosContacto?.nombre || 'Cliente'}*\n${detalle}\n\n💰 Total: $${total.toLocaleString('es-AR')}${cuotas}\nModalidad: ${modalidad}\n\n${this.observaciones || ''}`.trim();
+  return `🏠 *Hogar Conectado*\n\n*Cotización para ${this.datosContacto?.nombre || 'Cliente'}*\n${detalle}\n\n💰 Total: $${total.toLocaleString('es-AR')}${cuotas}\nModalidad: ${modalidad}${avisoCatalogo}\n\n${this.observaciones || ''}`.trim();
 };
 
 module.exports = mongoose.model('Cotizacion', cotizacionSchema);

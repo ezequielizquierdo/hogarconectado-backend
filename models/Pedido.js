@@ -13,6 +13,12 @@ const pedidoSchema = new mongoose.Schema({
     cantidad: { type: Number, min: 1, required: true },
     marca: String,
     modelo: String,
+    tipoComercializacion: {
+      type: String,
+      enum: ['stock-propio', 'producto-tercero', 'venta-catalogo'],
+      default: 'stock-propio'
+    },
+    stockReservado: { type: Boolean, default: true },
     precioUnitario: Number,
     subtotal: Number
   }],

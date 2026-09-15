@@ -98,6 +98,9 @@ router.post('/', validators, async (req, res) => {
       observaciones,
       creadaPor: req.user._id,
       tipoLiquidacion: req.user.rol === 'vendedor' ? 'vendedor-50-margen' : 'operacion-interna',
+      disponibilidadCatalogo: {
+        requerida: encontrados.some(producto => producto.tipoComercializacion === 'venta-catalogo')
+      },
       productos: productos.map(item => {
         const producto = encontrados.find(found => found._id.toString() === item.producto);
         const config = getProductPricingConfig(producto.porcentajeGanancia, process.env);
@@ -258,6 +261,7 @@ router.put('/:id/estado', [
   body('compradorNombre').if(body('estado').equals('confirmada')).trim().isLength({ min: 2, max: 100 }),
   body('entregaAcordada').if(body('estado').equals('confirmada')).trim().isLength({ min: 3, max: 500 }),
   body('agregarEnvio').if(body('estado').equals('confirmada')).isBoolean(),
+  body('disponibilidadCatalogoConfirmada').optional().isBoolean(),
   body('costoEnvio').optional().isFloat({ min: 0 })
 ], async (req, res) => {
   try {
@@ -267,8 +271,22 @@ router.put('/:id/estado', [
     if (!cotizacion) return;
     cotizacion.estado = req.body.estado;
     if (req.body.estado === 'confirmada') {
+      const incluyeCatalogo = cotizacion.productos.some(item => item.detalles?.tipoComercializacion === 'venta-catalogo');
+      if (incluyeCatalogo && req.body.disponibilidadCatalogoConfirmada !== true) {
+        return res.status(409).json({
+          success: false,
+          message: 'Confirmá la disponibilidad de los productos de catálogo antes de cerrar la venta'
+        });
+      }
       cotizacion.confirmadaPor = req.user._id;
       cotizacion.confirmadaAt = new Date();
+      if (incluyeCatalogo) {
+        cotizacion.disponibilidadCatalogo = {
+          requerida: true,
+          confirmadaAt: new Date(),
+          confirmadaPor: req.user._id
+        };
+      }
       cotizacion.venta = {
         compradorNombre: req.body.compradorNombre,
         entregaAcordada: req.body.entregaAcordada,

@@ -13,6 +13,14 @@ function selectedUnitPrice(item, modalidad) {
   return precios.contado;
 }
 
+function shouldReserveStock(item) {
+  return (item.detalles?.tipoComercializacion || 'stock-propio') !== 'venta-catalogo';
+}
+
+function quoteHasCatalogProducts(quote) {
+  return quote.productos.some(item => !shouldReserveStock(item));
+}
+
 async function acceptQuote({ quote, idempotencyKey }) {
   const session = await mongoose.startSession();
   let acceptedOrder;
@@ -32,6 +40,7 @@ async function acceptQuote({ quote, idempotencyKey }) {
       if (!freshQuote) throw Object.assign(new Error('La cotización ya fue procesada'), { statusCode: 409 });
 
       for (const item of freshQuote.productos) {
+        if (!shouldReserveStock(item)) continue;
         const result = await Producto.updateOne({
           _id: item.producto,
           activo: true,
@@ -54,6 +63,8 @@ async function acceptQuote({ quote, idempotencyKey }) {
           cantidad: item.cantidad,
           marca: item.detalles.marca,
           modelo: item.detalles.modelo,
+          tipoComercializacion: item.detalles.tipoComercializacion || 'stock-propio',
+          stockReservado: shouldReserveStock(item),
           precioUnitario: selectedUnitPrice(item, freshQuote.modalidadPago),
           subtotal: selectedUnitPrice(item, freshQuote.modalidadPago) * item.cantidad
         })),
@@ -89,6 +100,7 @@ async function releaseExpiredReservations() {
         );
         if (!order) return;
         for (const item of order.productos) {
+          if (item.stockReservado === false) continue;
           await Producto.updateOne(
             { _id: item.producto },
             { $inc: { 'stock.cantidad': item.cantidad } },
@@ -115,6 +127,7 @@ async function cancelReservation(orderId) {
       );
       if (!order) throw Object.assign(new Error('El pedido ya fue procesado'), { statusCode: 409 });
       for (const item of order.productos) {
+        if (item.stockReservado === false) continue;
         await Producto.updateOne(
           { _id: item.producto },
           { $inc: { 'stock.cantidad': item.cantidad } },
@@ -147,6 +160,13 @@ async function confirmOrderPayment(orderId, adminId) {
   let confirmed;
   try {
     await session.withTransaction(async () => {
+      const pendingOrder = await Pedido.findById(orderId).session(session);
+      if (!pendingOrder) throw Object.assign(new Error('Pedido no encontrado'), { statusCode: 404 });
+      const pendingQuote = await Cotizacion.findById(pendingOrder.cotizacion).session(session);
+      if (!pendingQuote) throw new Error('La cotización asociada ya no existe');
+      if (quoteHasCatalogProducts(pendingQuote) && !pendingQuote.disponibilidadCatalogo?.confirmadaAt) {
+        throw Object.assign(new Error('Confirmá primero la disponibilidad de los productos de catálogo'), { statusCode: 409 });
+      }
       const order = await Pedido.findOneAndUpdate(
         {
           _id: orderId,
@@ -159,8 +179,7 @@ async function confirmOrderPayment(orderId, adminId) {
         { new: true, session }
       );
       if (!order) throw Object.assign(new Error('La reserva venció o ya fue procesada'), { statusCode: 409 });
-      const quote = await Cotizacion.findById(order.cotizacion).session(session);
-      if (!quote) throw new Error('La cotización asociada ya no existe');
+      const quote = pendingQuote;
       quote.estado = 'confirmada';
       quote.confirmadaPor = adminId;
       quote.confirmadaAt = new Date();
@@ -182,4 +201,4 @@ async function confirmOrderPayment(orderId, adminId) {
   }
 }
 
-module.exports = { RESERVATION_MS, acceptQuote, cancelReservation, confirmOrderPayment, releaseExpiredReservations, reportOrderPayment, selectedUnitPrice };
+module.exports = { RESERVATION_MS, acceptQuote, cancelReservation, confirmOrderPayment, quoteHasCatalogProducts, releaseExpiredReservations, reportOrderPayment, selectedUnitPrice, shouldReserveStock };

@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { selectedUnitPrice, RESERVATION_MS } = require('../services/orderReservations');
+const { quoteHasCatalogProducts, selectedUnitPrice, shouldReserveStock, RESERVATION_MS } = require('../services/orderReservations');
 const Pedido = require('../models/Pedido');
 const { createPublicQuoteToken, hashPublicQuoteToken, isValidPublicQuoteToken } = require('../utils/publicQuoteToken');
 const { acceptanceMessage } = require('../routes/cotizacionesPublicas');
@@ -16,6 +16,17 @@ test('genera tokens públicos no reversibles con formato seguro para URL', () =>
 
 test('la reserva pública dura exactamente 24 horas', () => {
   assert.equal(RESERVATION_MS, 24 * 60 * 60 * 1000);
+});
+
+test('reserva stock propio pero no descuenta productos de catálogo', () => {
+  const own = { detalles: { tipoComercializacion: 'stock-propio' } };
+  const legacy = { detalles: {} };
+  const catalog = { detalles: { tipoComercializacion: 'venta-catalogo' } };
+  assert.equal(shouldReserveStock(own), true);
+  assert.equal(shouldReserveStock(legacy), true);
+  assert.equal(shouldReserveStock(catalog), false);
+  assert.equal(quoteHasCatalogProducts({ productos: [own, catalog] }), true);
+  assert.equal(quoteHasCatalogProducts({ productos: [own] }), false);
 });
 
 test('el pedido congela el precio unitario de la modalidad cotizada', () => {
@@ -38,12 +49,16 @@ test('el pedido admite diferenciar pago informado de pago confirmado', () => {
     comprador: { nombre: 'Cliente', telefono: '1123456789' },
     productos: [{
       producto: new (require('mongoose').Types.ObjectId)(), cantidad: 1,
-      marca: 'Marca', modelo: 'Modelo', precioUnitario: 100, subtotal: 100
+      marca: 'Marca', modelo: 'Modelo', tipoComercializacion: 'venta-catalogo',
+      stockReservado: false, precioUnitario: 100, subtotal: 100
     }],
     modalidadPago: 'contado', total: 100,
     reservadoAt: new Date(), reservaVenceAt: new Date(Date.now() + RESERVATION_MS),
     idempotencyKey: 'clave-idempotente-123'
   };
+  const catalogOrder = new Pedido(base);
+  assert.equal(catalogOrder.productos[0].tipoComercializacion, 'venta-catalogo');
+  assert.equal(catalogOrder.productos[0].stockReservado, false);
   assert.equal(new Pedido({ ...base, estado: 'pago-informado' }).validateSync(), undefined);
   assert.equal(new Pedido({ ...base, estado: 'estado-invalido' }).validateSync()?.errors.estado.kind, 'enum');
 });

@@ -123,6 +123,13 @@ test('el mensaje informa cuota y total para modalidades financiadas', () => {
   assert.match(mensaje, /Modalidad: 3 cuotas/);
 });
 
+test('el mensaje avisa cuando incluye productos sujetos a catálogo', () => {
+  const cotizacion = makeQuote('contado');
+  cotizacion.productos[0].detalles.tipoComercializacion = 'venta-catalogo';
+  cotizacion.calcularTotales();
+  assert.match(cotizacion.generarMensajeWhatsApp(), /sujetos a confirmación de disponibilidad/i);
+});
+
 test('genera mensajes de cotizaciones históricas sin estructuras de precios nuevas', () => {
   const cotizacion = makeQuote('facturado');
   cotizacion.productos[0].detalles.precios.factura = undefined;

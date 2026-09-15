@@ -3,7 +3,7 @@ const rateLimit = require('express-rate-limit');
 const { body, header, param, validationResult } = require('express-validator');
 const Cotizacion = require('../models/Cotizacion');
 const Pedido = require('../models/Pedido');
-const { acceptQuote, reportOrderPayment, selectedUnitPrice } = require('../services/orderReservations');
+const { acceptQuote, quoteHasCatalogProducts, reportOrderPayment, selectedUnitPrice } = require('../services/orderReservations');
 const { notifyPaymentReported } = require('../services/pushNotifications');
 const { hashPublicQuoteToken, isValidPublicQuoteToken } = require('../utils/publicQuoteToken');
 
@@ -32,6 +32,7 @@ async function findQuote(token) {
 }
 
 function serializePublicQuote(quote, order) {
+  const incluyeProductosCatalogo = quoteHasCatalogProducts(quote);
   return {
     id: quote._id,
     cliente: quote.datosContacto.nombre,
@@ -62,6 +63,8 @@ function serializePublicQuote(quote, order) {
         ? { cantidad: 6, monto: quote.totales.total / 6 }
         : null,
     observaciones: quote.observaciones,
+    incluyeProductosCatalogo,
+    disponibilidadCatalogoConfirmada: !incluyeProductosCatalogo || Boolean(quote.disponibilidadCatalogo?.confirmadaAt),
     aceptada: Boolean(order),
     pedido: order ? {
       estado: order.estado,
@@ -95,6 +98,12 @@ router.post('/:token/informar-pago', limiter, [param('token').custom(isValidPubl
       ? await Pedido.findById(quote.aceptacionCliente.pedido)
       : null;
     if (!order) return res.status(409).json({ success: false, message: 'Primero tenés que aceptar y reservar la cotización' });
+    if (quoteHasCatalogProducts(quote) && !quote.disponibilidadCatalogo?.confirmadaAt) {
+      return res.status(409).json({
+        success: false,
+        message: 'Esperá la confirmación de disponibilidad antes de informar el pago'
+      });
+    }
     const updated = await reportOrderPayment(order._id);
     if (order.estado === 'reserva-pendiente' && updated.estado === 'pago-informado') {
       await notifyPaymentReported(updated).catch(() => undefined);
@@ -122,12 +131,19 @@ router.post('/:token/informar-pago', limiter, [param('token').custom(isValidPubl
 router.post('/:token/aceptar', limiter, [
   param('token').custom(isValidPublicQuoteToken),
   header('x-idempotency-key').trim().isLength({ min: 12, max: 100 }),
-  body('aceptaReserva24h').custom(value => value === true)
+  body('aceptaReserva24h').custom(value => value === true),
+  body('aceptaCondicionesCatalogo').optional().isBoolean()
 ], async (req, res) => {
   try {
     if (!validationResult(req).isEmpty()) return res.status(400).json({ success: false, message: 'No pudimos validar la aceptación' });
     const quote = await findQuote(req.params.token);
     if (!quote) return res.status(404).json({ success: false, message: 'La cotización no existe o el enlace venció' });
+    if (quoteHasCatalogProducts(quote) && req.body.aceptaCondicionesCatalogo !== true) {
+      return res.status(400).json({
+        success: false,
+        message: 'Confirmá que entendés que los productos de catálogo están sujetos a disponibilidad'
+      });
+    }
     const existing = await Pedido.findOne({ cotizacion: quote._id });
     const order = existing || await acceptQuote({ quote, idempotencyKey: req.get('x-idempotency-key') });
     return res.status(existing ? 200 : 201).json({
@@ -135,7 +151,9 @@ router.post('/:token/aceptar', limiter, [
       data: { id: order._id, estado: order.estado, reservaVenceAt: order.reservaVenceAt },
       message: existing
         ? acceptanceMessage(order)
-        : 'Reservamos los productos durante 24 horas. El pago todavía está pendiente.'
+        : quoteHasCatalogProducts(quote)
+          ? 'Registramos tu aceptación. El stock propio quedó reservado por 24 horas y confirmaremos la disponibilidad de los productos de catálogo.'
+          : 'Reservamos los productos durante 24 horas. El pago todavía está pendiente.'
     });
   } catch (error) {
     return res.status(error.statusCode || 500).json({
