@@ -83,10 +83,12 @@ router.get('/', optionalAuthenticate, async (req, res) => {
       .skip(skip)
       .limit(limiteParsed);
 
-    const productos = await query;
-    
-    // Contar total para la paginación (usar los mismos filtros)
-    const total = await Producto.countDocuments(filtrosFinales);
+    // La lista y el total son independientes. Resolverlos en paralelo reduce el
+    // tiempo del primer catálogo, especialmente cuando Render acaba de iniciar.
+    const [productos, total] = await Promise.all([
+      query,
+      Producto.countDocuments(filtrosFinales)
+    ]);
     
     const totalPaginas = Math.ceil(total / limiteParsed);
     const tienePaginaAnterior = paginaParsed > 1;
@@ -125,6 +127,22 @@ router.get('/', optionalAuthenticate, async (req, res) => {
       success: false,
       message: 'Error al obtener productos',
       error: error.message
+    });
+  }
+});
+
+// GET /api/productos/marcas - Opciones livianas para los filtros del catálogo
+router.get('/marcas', optionalAuthenticate, async (req, res) => {
+  try {
+    const marcas = await Producto.distinct('marca', { activo: true });
+    res.json({
+      success: true,
+      data: marcas.filter(Boolean).sort((a, b) => a.localeCompare(b, 'es'))
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener marcas'
     });
   }
 });

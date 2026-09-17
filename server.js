@@ -144,6 +144,7 @@ const productAssistantRoutes = require('./routes/productAssistant');
 const vendedoresRoutes = require('./routes/vendedores');
 const cotizacionesPublicasRoutes = require('./routes/cotizacionesPublicas');
 const pedidosRoutes = require('./routes/pedidos');
+const solicitudesIncorporacionRoutes = require('./routes/solicitudesIncorporacion');
 const { authenticate } = require('./middleware/auth');
 
 const authLimiter = rateLimit({
@@ -158,6 +159,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/consultas', consultasRoutes);
 app.use('/api/vendedores', vendedoresRoutes);
 app.use('/api/cotizaciones-publicas', cotizacionesPublicasRoutes);
+app.use('/api/solicitudes-incorporacion', solicitudesIncorporacionRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/categorias', categoriasRoutes);
 app.use('/api/productos', productosRoutes);
