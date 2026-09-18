@@ -17,6 +17,7 @@ Esta carpeta contiene scripts auxiliares para el mantenimiento y administración
 ### 🐛 Debugging y Diagnóstico
 - **`debug-productos.js`** - Debug específico para problemas con productos
 - **`check-stock.js`** - Verificar estructura de campos de stock
+- **`test-api-local.sh`** - Smoke test de los endpoints públicos de una API local
 
 ## 🚀 Cómo usar los scripts
 
@@ -35,6 +36,12 @@ node scripts/actualizar-stock.js
 
 # Diagnosticar problemas del API
 node scripts/diagnostico-final.js
+
+# Comprobar una API local sin modificar datos
+bash scripts/test-api-local.sh
+
+# Comprobar otra instancia
+API_BASE_URL=https://ejemplo.com bash scripts/test-api-local.sh
 ```
 
 ## ⚠️ Importante
