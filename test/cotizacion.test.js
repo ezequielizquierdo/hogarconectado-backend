@@ -3,13 +3,26 @@ const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 const Cotizacion = require('../models/Cotizacion');
 const Producto = require('../models/Producto');
-const { serializeForUser, percentageChange } = require('../routes/cotizaciones');
+const { serializeQuoteForUser } = require('../utils/quoteSerialization');
+const { getMonthRange, getPreviousMonthRange, percentageChange } = require('../utils/metricsPeriod');
 
 test('calcula variaciones mensuales aun cuando el período anterior no tuvo ventas', () => {
   assert.equal(percentageChange(12, 10), 20);
   assert.equal(percentageChange(8, 10), -20);
   assert.equal(percentageChange(4, 0), 100);
   assert.equal(percentageChange(0, 0), 0);
+});
+
+test('normaliza el período mensual solicitado para las métricas', () => {
+  const range = getMonthRange('2026-09');
+  assert.equal(range.key, '2026-09');
+  assert.deepEqual(range.start, new Date(2026, 8, 1));
+  assert.deepEqual(range.end, new Date(2026, 9, 1));
+
+  const previous = getPreviousMonthRange(range);
+  assert.deepEqual(previous.start, new Date(2026, 7, 1));
+  assert.deepEqual(previous.end, range.start);
+  assert.equal(getMonthRange('2026-13'), null);
 });
 
 function makeQuote(modalidadPago) {
@@ -90,7 +103,7 @@ test('calcula dinero a rendir y ganancia según la modalidad confirmada', () => 
   });
 });
 
-test('divide el margen con un vendedor y suma el envío íntegro al dinero a rendir', () => {
+test('conserva la liquidación histórica 50/50 sin recalcular ventas anteriores', () => {
   const cotizacion = makeQuote('contado');
   cotizacion.tipoLiquidacion = 'vendedor-50-margen';
   cotizacion.venta = { agregarEnvio: true, costoEnvio: 20 };
@@ -101,6 +114,36 @@ test('divide el margen con un vendedor y suma el envío íntegro al dinero a ren
     dineroARendir: 250,
     gananciaVendedor: 30,
     participacionHogarConectado: 30
+  });
+});
+
+test('asigna 60% del margen al vendedor y 40% a Hogar Conectado; el envío queda fuera del reparto', () => {
+  const cotizacion = makeQuote('contado');
+  cotizacion.tipoLiquidacion = 'vendedor-60-margen';
+  cotizacion.venta = { agregarEnvio: true, costoEnvio: 20 };
+  cotizacion.calcularTotales();
+
+  assert.deepEqual(cotizacion.calcularResumenConfirmacion().toObject(), {
+    totalVendido: 280,
+    dineroARendir: 244,
+    gananciaVendedor: 36,
+    participacionHogarConectado: 24
+  });
+});
+
+test('aplica 60/40 al ejemplo de precio base 371000 y venta a 430000', () => {
+  const cotizacion = makeQuote('contado');
+  cotizacion.tipoLiquidacion = 'vendedor-60-margen';
+  cotizacion.productos[0].cantidad = 1;
+  cotizacion.productos[0].detalles.precioBase = 371000;
+  cotizacion.productos[0].detalles.precios.contado = 430000;
+  cotizacion.calcularTotales();
+
+  assert.deepEqual(cotizacion.calcularResumenConfirmacion().toObject(), {
+    totalVendido: 430000,
+    dineroARendir: 394600,
+    gananciaVendedor: 35400,
+    participacionHogarConectado: 23600
   });
 });
 
@@ -158,7 +201,7 @@ test('serializa ObjectId de cotizaciones lean como cadenas utilizables en rutas'
     creadaPor: new mongoose.Types.ObjectId()
   };
 
-  const serialized = serializeForUser(leanQuote, { rol: 'admin' });
+  const serialized = serializeQuoteForUser(leanQuote, { rol: 'admin' });
   const payload = JSON.parse(JSON.stringify(serialized));
 
   assert.equal(payload._id, quoteId.toString());
@@ -170,7 +213,7 @@ test('reconoce cotizaciones históricas de catálogo como pendientes de disponib
   quote.productos[0].detalles.tipoComercializacion = 'venta-catalogo';
   delete quote.disponibilidadCatalogo;
 
-  const result = serializeForUser(quote, { rol: 'admin' });
+  const result = serializeQuoteForUser(quote, { rol: 'admin' });
 
   assert.equal(result.disponibilidadCatalogo.requerida, true);
   assert.equal(result.disponibilidadCatalogo.estado, 'pendiente');
@@ -194,7 +237,7 @@ test('la vista del vendedor no expone costos ni la participación interna', () =
   cotizacion.calcularTotales();
   cotizacion.calcularResumenConfirmacion();
 
-  const payload = serializeForUser(cotizacion, { rol: 'vendedor' });
+  const payload = serializeQuoteForUser(cotizacion, { rol: 'vendedor' });
   const detalles = payload.productos[0].detalles;
 
   assert.equal(payload.tipoLiquidacion, undefined);

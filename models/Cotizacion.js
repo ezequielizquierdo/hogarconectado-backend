@@ -111,7 +111,7 @@ const cotizacionSchema = new mongoose.Schema({
     gananciaVendedor: Number,
     participacionHogarConectado: Number
   },
-  tipoLiquidacion: { type: String, enum: ['operacion-interna', 'vendedor-50-margen'], default: 'operacion-interna' },
+  tipoLiquidacion: { type: String, enum: ['operacion-interna', 'vendedor-50-margen', 'vendedor-60-margen'], default: 'operacion-interna' },
   venta: {
     compradorNombre: String,
     entregaAcordada: String,
@@ -121,10 +121,13 @@ const cotizacionSchema = new mongoose.Schema({
     estadoEntrega: { type: String, enum: ['pendiente', 'coordinada', 'entregada', 'cancelada'], default: 'pendiente' }
   },
   observaciones: String,
-  creadaPor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true }
+  creadaPor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true },
+  consultaOrigen: { type: mongoose.Schema.Types.ObjectId, ref: 'Consulta' },
+  vendedorOrigen: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }
 }, { timestamps: true });
 
 cotizacionSchema.index({ creadaPor: 1, createdAt: -1 });
+cotizacionSchema.index({ vendedorOrigen: 1, createdAt: -1 });
 cotizacionSchema.index({ estado: 1, createdAt: -1 });
 cotizacionSchema.index({ 'disponibilidadCatalogo.requerida': 1, 'disponibilidadCatalogo.estado': 1, createdAt: -1 });
 
@@ -143,9 +146,10 @@ cotizacionSchema.methods.calcularResumenConfirmacion = function() {
   const costoEnvio = this.venta?.agregarEnvio ? Number(this.venta.costoEnvio || 0) : 0;
   const totalProductos = this.totales.total;
   const margenComercial = Math.max(0, totalProductos - costoProductos);
-  const gananciaVendedor = this.tipoLiquidacion === 'vendedor-50-margen'
-    ? margenComercial / 2
-    : margenComercial;
+  const porcentajeVendedor = this.tipoLiquidacion === 'vendedor-60-margen'
+    ? 0.6
+    : this.tipoLiquidacion === 'vendedor-50-margen' ? 0.5 : 1;
+  const gananciaVendedor = margenComercial * porcentajeVendedor;
   const participacionHogarConectado = margenComercial - gananciaVendedor;
   const totalVendido = totalProductos + costoEnvio;
   const dineroARendir = totalVendido - gananciaVendedor;

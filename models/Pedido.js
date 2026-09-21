@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const pedidoSchema = new mongoose.Schema({
   cotizacion: { type: mongoose.Schema.Types.ObjectId, ref: 'Cotizacion', required: true, unique: true },
   vendedor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true },
+  vendedorOrigen: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
   comprador: {
     nombre: { type: String, required: true, trim: true },
     telefono: { type: String, required: true, trim: true },

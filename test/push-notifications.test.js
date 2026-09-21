@@ -97,6 +97,18 @@ test('la notificación resume una consulta con varios productos', () => {
   assert.equal(payload.body, 'TCL 435SK y 2 más · Nueva consulta');
 });
 
+test('el administrador ve a qué vendedor llegó la consulta sin datos privados del comprador', () => {
+  const payload = buildInquiryNotificationPayload({
+    _id: { toString: () => 'consulta-vendedor' },
+    productoSnapshot: { marca: 'TCL', modelo: '435SK' },
+    contacto: { nombre: 'Cliente privado', telefono: '1123456789' }
+  }, { recipient: 'admin', sellerName: 'Juan Pérez' });
+
+  assert.equal(payload.title, 'Consulta para Juan Pérez');
+  assert.equal(payload.body, 'TCL 435SK · Vendedor avisado');
+  assert.doesNotMatch(JSON.stringify(payload), /Cliente privado|1123456789/);
+});
+
 test('la notificación de pago dirige a cotizaciones sin exponer datos del comprador', () => {
   const payload = buildPaymentReportedPayload({
     _id: 'pedido-1',

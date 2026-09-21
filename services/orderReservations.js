@@ -57,6 +57,7 @@ async function acceptQuote({ quote, idempotencyKey }) {
       const [created] = await Pedido.create([{
         cotizacion: freshQuote._id,
         vendedor: freshQuote.creadaPor,
+        vendedorOrigen: freshQuote.vendedorOrigen,
         comprador: freshQuote.datosContacto,
         productos: freshQuote.productos.map(item => ({
           producto: item.producto,

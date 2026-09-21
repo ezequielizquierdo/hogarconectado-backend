@@ -8,7 +8,9 @@ const router = express.Router();
 
 router.get('/', requireRoles('admin', 'vendedor'), async (req, res) => {
   try {
-    const filter = req.user.rol === 'vendedor' ? { vendedor: req.user._id } : {};
+    const filter = req.user.rol === 'vendedor'
+      ? { $or: [{ vendedor: req.user._id }, { vendedorOrigen: req.user._id }] }
+      : {};
     const data = await Pedido.find(filter).populate('vendedor', 'nombre email').sort({ createdAt: -1 }).limit(100).lean();
     return res.json({ success: true, data });
   } catch {

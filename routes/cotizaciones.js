@@ -10,75 +10,11 @@ const { getProductPricingConfig } = require('../utils/pricing');
 const { buildQuoteOwnershipFilter } = require('../utils/sellerAccess');
 const { createPublicQuoteToken, hashPublicQuoteToken } = require('../utils/publicQuoteToken');
 const { CATALOG_AVAILABILITY_STATES, canTransitionCatalogAvailability } = require('../utils/catalogAvailability');
+const { serializeQuoteForUser } = require('../utils/quoteSerialization');
+const { getMonthRange, getPreviousMonthRange, percentageChange } = require('../utils/metricsPeriod');
+const { canLinkInquiry, quoteMatchesInquiry, resolveSellerOrigin } = require('../utils/quoteAttribution');
 
 const router = express.Router();
-
-function serializeForUser(cotizacion, user) {
-  const source = typeof cotizacion.toObject === 'function'
-    ? cotizacion.toObject({ virtuals: false })
-    // Una copia superficial conserva los ObjectId y permite que Express use
-    // su toJSON(). structuredClone() les quitaba el prototipo y el frontend
-    // recibía objetos que terminaban convertidos en "[object Object]".
-    : { ...cotizacion };
-  const incluyeCatalogo = source.productos?.some(item => item.detalles?.tipoComercializacion === 'venta-catalogo');
-  if (incluyeCatalogo) {
-    source.disponibilidadCatalogo = {
-      ...(source.disponibilidadCatalogo || {}),
-      requerida: true,
-      estado: source.disponibilidadCatalogo?.estado || 'pendiente'
-    };
-  }
-  if (user.rol !== 'vendedor') return source;
-  delete source.tipoLiquidacion;
-  if (source.resumenConfirmacion) {
-    source.resumenConfirmacion = {
-      totalVendido: source.resumenConfirmacion.totalVendido,
-      dineroARendir: source.resumenConfirmacion.dineroARendir,
-      gananciaVendedor: source.resumenConfirmacion.gananciaVendedor
-    };
-  }
-  source.productos = source.productos.map(item => {
-    const precios = item.detalles?.precios || {};
-    return {
-      ...item,
-      detalles: {
-        categoria: item.detalles?.categoria,
-        marca: item.detalles?.marca,
-        modelo: item.detalles?.modelo,
-        tipoComercializacion: item.detalles?.tipoComercializacion || 'stock-propio',
-        catalogo: item.detalles?.tipoComercializacion === 'venta-catalogo'
-          ? item.detalles?.catalogo
-          : undefined,
-        precios: {
-          contado: precios.contado,
-          factura: { unPago: precios.factura?.unPago },
-          tresCuotas: { total: precios.tresCuotas?.total, cuota: precios.tresCuotas?.cuota },
-          seisCuotas: { total: precios.seisCuotas?.total, cuota: precios.seisCuotas?.cuota }
-        }
-      }
-    };
-  });
-  return source;
-}
-
-function getMonthRange(value) {
-  const match = /^(\d{4})-(\d{2})$/.exec(String(value || ''));
-  const now = new Date();
-  const year = match ? Number(match[1]) : now.getFullYear();
-  const month = match ? Number(match[2]) - 1 : now.getMonth();
-  if (month < 0 || month > 11) return null;
-  return { start: new Date(year, month, 1), end: new Date(year, month + 1, 1), key: `${year}-${String(month + 1).padStart(2, '0')}` };
-}
-
-function getPreviousMonthRange(range) {
-  const start = new Date(range.start.getFullYear(), range.start.getMonth() - 1, 1);
-  return { start, end: range.start };
-}
-
-function percentageChange(current, previous) {
-  if (!previous) return current ? 100 : 0;
-  return Math.round(((current - previous) / previous) * 1000) / 10;
-}
 
 const validators = [
   body('datosContacto.nombre').trim().isLength({ min: 2, max: 100 }),
@@ -87,6 +23,7 @@ const validators = [
   body('productos.*.producto').isMongoId(),
   body('productos.*.cantidad').isInt({ min: 1 }),
   body('productos.*.porcentajeAplicado').optional().isFloat({ min: 0, max: 100 }),
+  body('consultaOrigen').optional().isMongoId(),
   body('modalidadPago').optional().isIn(['contado', 'facturado', '3-cuotas', '6-cuotas'])
 ];
 
@@ -100,7 +37,8 @@ async function findAuthorized(req, res) {
     res.status(404).json({ success: false, message: 'Cotización no encontrada' });
     return null;
   }
-  if (!canAccessOwnedResource(cotizacion.creadaPor, req.user)) {
+  if (!canAccessOwnedResource(cotizacion.creadaPor, req.user)
+    && !(req.user.rol === 'vendedor' && cotizacion.vendedorOrigen?.toString() === req.user._id.toString())) {
     res.status(403).json({ success: false, message: 'No tenés acceso a esta cotización' });
     return null;
   }
@@ -114,7 +52,7 @@ router.post('/', validators, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Errores de validación', errors: errors.array() });
     }
 
-    const { datosContacto, productos, modalidadPago, observaciones } = req.body;
+    const { datosContacto, productos, modalidadPago, observaciones, consultaOrigen } = req.body;
     const productosIds = productos.map(item => item.producto);
     const encontrados = await Producto.find({ _id: { $in: productosIds }, activo: true })
       .populate('categoria', 'nombre');
@@ -122,12 +60,28 @@ router.post('/', validators, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Uno o más productos no existen o no están disponibles' });
     }
 
+    let consulta = null;
+    if (consultaOrigen) {
+      consulta = await Consulta.findById(consultaOrigen).select('contacto productos producto vendedorOrigen asignadaA');
+      if (!consulta) return res.status(404).json({ success: false, message: 'Consulta de origen no encontrada' });
+      if (!quoteMatchesInquiry(consulta, datosContacto, productosIds)) {
+        return res.status(409).json({ success: false, message: 'La cotización no corresponde a la consulta de origen' });
+      }
+      if (!canLinkInquiry(req.user, consulta)) {
+        return res.status(403).json({ success: false, message: 'Esta consulta pertenece a otro vendedor' });
+      }
+    }
+
+    const vendedorOrigen = resolveSellerOrigin(req.user, consulta);
+
     const cotizacion = new Cotizacion({
       datosContacto,
       modalidadPago: modalidadPago || 'contado',
       observaciones,
       creadaPor: req.user._id,
-      tipoLiquidacion: req.user.rol === 'vendedor' ? 'vendedor-50-margen' : 'operacion-interna',
+      consultaOrigen: consulta?._id,
+      vendedorOrigen,
+      tipoLiquidacion: vendedorOrigen ? 'vendedor-60-margen' : 'operacion-interna',
       disponibilidadCatalogo: {
         requerida: encontrados.some(producto => producto.tipoComercializacion === 'venta-catalogo'),
         estado: encontrados.some(producto => producto.tipoComercializacion === 'venta-catalogo') ? 'pendiente' : undefined
@@ -162,7 +116,7 @@ router.post('/', validators, async (req, res) => {
     });
     cotizacion.calcularTotales();
     await cotizacion.save();
-    res.status(201).json({ success: true, message: 'Cotización creada exitosamente', data: serializeForUser(cotizacion, req.user) });
+    res.status(201).json({ success: true, message: 'Cotización creada exitosamente', data: serializeQuoteForUser(cotizacion, req.user) });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error al crear cotización' });
   }
@@ -252,7 +206,7 @@ router.get('/estadisticas/tablero', requireRoles('admin', 'vendedor'), async (re
       ]),
       req.user.rol === 'admin' ? Cotizacion.aggregate([
         { $match: saleMatch },
-        { $group: { _id: '$creadaPor', ventas: { $sum: 1 }, montoVendido: { $sum: '$resumenConfirmacion.totalVendido' }, ganancia: { $sum: '$resumenConfirmacion.gananciaVendedor' } } },
+        { $group: { _id: { $ifNull: ['$vendedorOrigen', '$creadaPor'] }, ventas: { $sum: 1 }, montoVendido: { $sum: '$resumenConfirmacion.totalVendido' }, ganancia: { $sum: '$resumenConfirmacion.gananciaVendedor' } } },
         { $sort: { ventas: -1, montoVendido: -1 } },
         { $lookup: { from: 'usuarios', localField: '_id', foreignField: '_id', as: 'vendedor' } },
         { $unwind: '$vendedor' },
@@ -389,7 +343,7 @@ router.get('/', async (req, res) => {
         .sort({ createdAt: -1 }).skip((pagina - 1) * limite).limit(limite).lean(),
       Cotizacion.countDocuments(filtros)
     ]);
-    res.json({ success: true, data: data.map(item => serializeForUser(item, req.user)), pagination: { pagina, limite, total, paginas: Math.ceil(total / limite) } });
+    res.json({ success: true, data: data.map(item => serializeQuoteForUser(item, req.user)), pagination: { pagina, limite, total, paginas: Math.ceil(total / limite) } });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error al obtener cotizaciones' });
   }
@@ -404,7 +358,7 @@ router.get('/:id', async (req, res) => {
     await cotizacion.populate('aceptacionCliente.pedido', 'estado reservadoAt reservaVenceAt');
     res.json({
       success: true,
-      data: serializeForUser(cotizacion, req.user)
+      data: serializeQuoteForUser(cotizacion, req.user)
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error al obtener cotización' });
@@ -458,7 +412,7 @@ router.put('/:id/estado', [
     }
     await cotizacion.save();
     await cotizacion.populate('confirmadaPor', 'nombre email');
-    res.json({ success: true, data: serializeForUser(cotizacion, req.user), message: 'Estado actualizado exitosamente' });
+    res.json({ success: true, data: serializeQuoteForUser(cotizacion, req.user), message: 'Estado actualizado exitosamente' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error al actualizar estado' });
   }
@@ -493,7 +447,7 @@ router.patch('/:id/disponibilidad-catalogo', [
     cotizacion.disponibilidadCatalogo.confirmadaPor = undefined;
   }
   await cotizacion.save();
-  return res.json({ success: true, data: serializeForUser(cotizacion, req.user), message: 'Disponibilidad actualizada' });
+  return res.json({ success: true, data: serializeQuoteForUser(cotizacion, req.user), message: 'Disponibilidad actualizada' });
 });
 
 router.patch('/:id/venta', requireRoles('admin'), [
@@ -573,5 +527,3 @@ router.delete('/:id', requireRoles('admin'), async (req, res) => {
 });
 
 module.exports = router;
-module.exports.serializeForUser = serializeForUser;
-module.exports.percentageChange = percentageChange;

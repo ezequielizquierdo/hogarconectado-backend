@@ -4,7 +4,9 @@ const { buildQuoteOwnershipFilter, buildSellerInquiryFilter } = require('../util
 
 test('el vendedor solo obtiene estadísticas de sus cotizaciones', () => {
   const id = 'seller-id';
-  assert.deepEqual(buildQuoteOwnershipFilter({ _id: id, rol: 'vendedor' }), { creadaPor: id });
+  assert.deepEqual(buildQuoteOwnershipFilter({ _id: id, rol: 'vendedor' }), {
+    $or: [{ creadaPor: id }, { vendedorOrigen: id }]
+  });
   assert.deepEqual(buildQuoteOwnershipFilter({ _id: 'admin-id', rol: 'admin' }), {});
 });
 

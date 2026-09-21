@@ -9,7 +9,9 @@ function buildSellerInquiryFilter(userId) {
 }
 
 function buildQuoteOwnershipFilter(user) {
-  return user?.rol === 'vendedor' ? { creadaPor: user._id } : {};
+  return user?.rol === 'vendedor'
+    ? { $or: [{ creadaPor: user._id }, { vendedorOrigen: user._id }] }
+    : {};
 }
 
 module.exports = { buildQuoteOwnershipFilter, buildSellerInquiryFilter };

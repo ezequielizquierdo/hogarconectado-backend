@@ -47,12 +47,14 @@ async function sendToSubscriptions(subscriptions, payload) {
   return result;
 }
 
-function buildInquiryNotificationPayload(consulta) {
+function buildInquiryNotificationPayload(consulta, { recipient = 'seller', sellerName } = {}) {
   const first = consulta.productos?.[0]?.productoSnapshot || consulta.productoSnapshot;
   const extraCount = Math.max(0, (consulta.productos?.length || 1) - 1);
+  const productSummary = `${first.marca} ${first.modelo}${extraCount ? ` y ${extraCount} más` : ''}`;
+  const isAdminForSeller = recipient === 'admin' && Boolean(sellerName);
   return {
-    title: 'Tenés una consulta por responder',
-    body: `${first.marca} ${first.modelo}${extraCount ? ` y ${extraCount} más` : ''} · Nueva consulta`,
+    title: isAdminForSeller ? `Consulta para ${sellerName}` : 'Tenés una consulta por responder',
+    body: `${productSummary} · ${isAdminForSeller ? 'Vendedor avisado' : 'Nueva consulta'}`,
     tag: `consulta-${consulta._id}`,
     url: '/consultas',
     data: { consultaId: consulta._id.toString() }
@@ -72,16 +74,31 @@ function buildPaymentReportedPayload(order) {
 async function notifyAdminsNewInquiry(consulta) {
   if (!configureWebPush()) return { sent: 0, skipped: true };
 
-  const recipientFilter = consulta.vendedorOrigen
-    ? { $or: [{ rol: 'admin' }, { _id: consulta.vendedorOrigen }] }
-    : { rol: 'admin' };
-  const admins = await Usuario.find({ ...recipientFilter, estado: 'activo' }).select('_id').lean();
-  if (!admins.length) return { sent: 0 };
+  const recipients = await Usuario.find({
+    estado: 'activo',
+    $or: [{ rol: 'admin' }, ...(consulta.vendedorOrigen ? [{ _id: consulta.vendedorOrigen }] : [])]
+  }).select('_id nombre rol').lean();
+  if (!recipients.length) return { sent: 0 };
 
-  const subscriptions = await PushSubscription.find({ usuario: { $in: admins.map(admin => admin._id) } });
-  const payload = buildInquiryNotificationPayload(consulta);
-
-  return sendToSubscriptions(subscriptions, payload);
+  const subscriptions = await PushSubscription.find({ usuario: { $in: recipients.map(user => user._id) } });
+  const seller = recipients.find(user => user.rol === 'vendedor' && user._id.toString() === consulta.vendedorOrigen?.toString());
+  const sellerSubscriptions = seller
+    ? subscriptions.filter(subscription => subscription.usuario.toString() === seller._id.toString())
+    : [];
+  const adminIds = new Set(recipients.filter(user => user.rol === 'admin').map(user => user._id.toString()));
+  const adminSubscriptions = subscriptions.filter(subscription => adminIds.has(subscription.usuario.toString()));
+  const [sellerResult, adminResult] = await Promise.all([
+    sendToSubscriptions(sellerSubscriptions, buildInquiryNotificationPayload(consulta)),
+    sendToSubscriptions(adminSubscriptions, buildInquiryNotificationPayload(consulta, {
+      recipient: 'admin', sellerName: seller?.nombre
+    }))
+  ]);
+  return {
+    sent: sellerResult.sent + adminResult.sent,
+    expired: sellerResult.expired + adminResult.expired,
+    failed: sellerResult.failed + adminResult.failed,
+    providerStatusCodes: [...new Set([...sellerResult.providerStatusCodes, ...adminResult.providerStatusCodes])]
+  };
 }
 
 async function notifyPaymentReported(order) {
@@ -89,7 +106,11 @@ async function notifyPaymentReported(order) {
 
   const recipients = await Usuario.find({
     estado: 'activo',
-    $or: [{ rol: 'admin' }, { _id: order.vendedor }]
+    $or: [
+      { rol: 'admin' },
+      ...(order.vendedor ? [{ _id: order.vendedor }] : []),
+      ...(order.vendedorOrigen ? [{ _id: order.vendedorOrigen }] : [])
+    ]
   }).select('_id').lean();
   if (!recipients.length) return { sent: 0 };
 
