@@ -73,6 +73,7 @@ No versionar `.env`, credenciales, cadenas de conexión ni secretos.
 - Validar tokens de Google con `GOOGLE_CLIENT_ID` y emitir JWT únicamente desde el backend.
 - Aplicar autorización por rol en el backend, incluso si el frontend oculta controles.
 - El rol `vendedor` puede leer precios de venta sin precio base ni costos internos, gestionar únicamente sus cotizaciones, atender consultas disponibles o asignadas y recibir notificaciones; no puede mutar productos, categorías, marcas ni usuarios.
+- Cada vendedor tiene un alias público único basado en su nombre (`slugVendedor`); conservar `codigoVendedor` para que los enlaces anteriores sigan atribuyendo consultas. No reasignar alias existentes por cambios de nombre.
 - Las nuevas ventas atribuidas a vendedores asignan 60% del margen comercial al vendedor y 40% a Hogar Conectado. Las cotizaciones históricas con regla 50/50 conservan su liquidación; el envío se reintegra íntegro, no genera comisión y el backend congela la liquidación al confirmar.
 - El alta de consultas comerciales es pública; su listado, resumen y cambio de estado son exclusivos del rol `admin`.
 - Mantener validación de entrada, Helmet, CORS y rate limiting.

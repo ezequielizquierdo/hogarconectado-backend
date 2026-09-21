@@ -62,7 +62,7 @@ router.post('/google', [
 
 router.get('/me', authenticate, async (req, res, next) => {
   try {
-    if (req.user.rol === 'vendedor' && !req.user.codigoVendedor) {
+    if (req.user.rol === 'vendedor' && (!req.user.codigoVendedor || !req.user.slugVendedor)) {
       await req.user.save();
     }
     res.json({ success: true, data: req.user });

@@ -31,7 +31,7 @@ const createValidators = [
   }),
   body('nombre').customSanitizer(normalizeContactName).isLength({ min: 2, max: 100 }),
   body('telefono').customSanitizer(normalizePhone).custom(isValidPhone),
-  body('codigoVendedor').optional({ values: 'falsy' }).trim().matches(/^[a-z0-9-]{6,32}$/),
+  body('codigoVendedor').optional({ values: 'falsy' }).trim().matches(/^[a-z0-9-]{3,32}$/),
   body('website').optional({ values: 'falsy' }).isEmpty()
 ];
 
@@ -81,7 +81,10 @@ router.post('/', publicInquiryLimiter, createValidators, async (req, res) => {
     const firstProduct = snapshots[0];
 
     const vendedorOrigen = req.body.codigoVendedor
-      ? await Usuario.findOne({ codigoVendedor: req.body.codigoVendedor, rol: 'vendedor', estado: 'activo' }).select('_id')
+      ? await Usuario.findOne({
+        $or: [{ codigoVendedor: req.body.codigoVendedor }, { slugVendedor: req.body.codigoVendedor }],
+        rol: 'vendedor', estado: 'activo'
+      }).select('_id')
       : null;
 
     const consulta = await Consulta.create({
