@@ -9,6 +9,7 @@ const { authenticate, optionalAuthenticate, requireRoles } = require('../middlew
 const { deleteAssets } = require('../services/imageStorage');
 const { serializeAuthenticatedProduct, serializePublicProduct, serializeSellerProduct } = require('../utils/publicProduct');
 const { buildProductSearchFilter } = require('../utils/productSearch');
+const { updatedSince, isPriceOrder, sortBySalePrice } = require('../utils/productCatalogFilters');
 
 // GET /api/productos - Obtener todos los productos con filtros y paginación
 router.get('/', optionalAuthenticate, async (req, res) => {
@@ -21,6 +22,7 @@ router.get('/', optionalAuthenticate, async (req, res) => {
       limite = 20, // Límite más conservador para mejor rendimiento
       pagina = 1,
       buscar,
+      actualizados,
       ordenar = 'recientes' // nuevo parámetro de ordenamiento
     } = req.query;
 
@@ -33,6 +35,8 @@ router.get('/', optionalAuthenticate, async (req, res) => {
     
     if (categoria) filtros.categoria = categoria;
     if (marca) filtros.marca = new RegExp(marca, 'i');
+    const since = updatedSince(actualizados);
+    if (since) filtros.updatedAt = { $gte: since };
     if (tipoComercializacion === 'stock-propio') {
       filtros.$or = [
         { tipoComercializacion: 'stock-propio' },
@@ -59,12 +63,6 @@ router.get('/', optionalAuthenticate, async (req, res) => {
       case 'alfabetico':
         sortOptions = { marca: 1, modelo: 1 };
         break;
-      case 'precio-asc':
-        sortOptions = { precioBase: 1 };
-        break;
-      case 'precio-desc':
-        sortOptions = { precioBase: -1 };
-        break;
       case 'categoria':
         sortOptions = { 'categoria.nombre': 1, marca: 1 };
         break;
@@ -77,18 +75,20 @@ router.get('/', optionalAuthenticate, async (req, res) => {
     const searchFilter = buscar ? buildProductSearchFilter(buscar) : null;
     const filtrosFinales = searchFilter ? { ...filtros, ...searchFilter } : filtros;
 
-    let query = Producto.find(filtrosFinales)
-      .populate('categoria', 'nombre icono')
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(limiteParsed);
-
-    // La lista y el total son independientes. Resolverlos en paralelo reduce el
-    // tiempo del primer catálogo, especialmente cuando Render acaba de iniciar.
-    const [productos, total] = await Promise.all([
-      query,
-      Producto.countDocuments(filtrosFinales)
+    // El precio público incluye ganancia y descuentos vigentes. Se calcula con
+    // el modelo compartido antes de paginar; ordenar por precioBase sería incorrecto.
+    const priceOrder = isPriceOrder(ordenar);
+    const [matchedProducts, count] = await Promise.all([
+      priceOrder
+        ? Producto.find(filtrosFinales).populate('categoria', 'nombre icono')
+        : Producto.find(filtrosFinales).populate('categoria', 'nombre icono')
+          .sort(sortOptions).skip(skip).limit(limiteParsed),
+      priceOrder ? Promise.resolve(null) : Producto.countDocuments(filtrosFinales)
     ]);
+    const total = priceOrder ? matchedProducts.length : count;
+    const productos = priceOrder
+      ? sortBySalePrice(matchedProducts, ordenar).slice(skip, skip + limiteParsed)
+      : matchedProducts;
     
     const totalPaginas = Math.ceil(total / limiteParsed);
     const tienePaginaAnterior = paginaParsed > 1;
@@ -119,6 +119,7 @@ router.get('/', optionalAuthenticate, async (req, res) => {
         tipoComercializacion,
         disponible,
         buscar,
+        actualizados: actualizados || 'todos',
         ordenar
       }
     });
