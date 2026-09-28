@@ -62,14 +62,14 @@ test('analyzeProductImage reintenta errores temporales y conserva la imagen', as
     });
     assert.equal(result.modelo, 'M2');
     assert.equal(calls, 3);
-    assert.deepEqual(waits, [750, 1500]);
+    assert.deepEqual(waits, [5000, 15000]);
   } finally {
     if (previousKey === undefined) delete process.env.GEMINI_API_KEY;
     else process.env.GEMINI_API_KEY = previousKey;
   }
 });
 
-test('analyzeProductImage informa límite temporal después de tres intentos', async () => {
+test('analyzeProductImage detiene los reintentos al recibir un límite temporal', async () => {
   const previousKey = process.env.GEMINI_API_KEY;
   process.env.GEMINI_API_KEY = 'test-key';
   let calls = 0;
@@ -83,9 +83,9 @@ test('analyzeProductImage informa límite temporal después de tres intentos', a
         },
         waitImpl: async () => undefined
       }),
-      error => error.code === 'IMAGE_ANALYSIS_RATE_LIMITED' && error.statusCode === 429 && error.retryable === true
+      error => error.code === 'IMAGE_ANALYSIS_RATE_LIMITED' && error.statusCode === 429 && error.retryable === true && error.retryAfterSeconds === 60
     );
-    assert.equal(calls, 3);
+    assert.equal(calls, 1);
   } finally {
     if (previousKey === undefined) delete process.env.GEMINI_API_KEY;
     else process.env.GEMINI_API_KEY = previousKey;

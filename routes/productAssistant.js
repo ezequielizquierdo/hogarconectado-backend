@@ -92,7 +92,8 @@ router.post('/analyze', requireRoles('editor', 'admin'), analysisLimiter, async 
         ? 'El servicio de análisis no está disponible temporalmente. Podés reintentar sin volver a elegir la imagen.'
         : error.message,
       code: error.code || 'IMAGE_ANALYSIS_FAILED',
-      retryable: Boolean(error.retryable)
+      retryable: Boolean(error.retryable),
+      retryAfterSeconds: error.retryAfterSeconds || undefined
     });
   }
 });

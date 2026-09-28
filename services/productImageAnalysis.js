@@ -2,6 +2,9 @@ const DEFAULT_MODEL = 'gemini-3.5-flash-lite';
 const DEFAULT_TIMEOUT_MS = 30_000;
 const MAX_ATTEMPTS = 3;
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
+const RATE_LIMIT_COOLDOWN_MS = 60_000;
+const UNAVAILABLE_COOLDOWN_MS = 30_000;
+let analysisUnavailableUntil = 0;
 
 const PRODUCT_SCHEMA = {
   type: 'OBJECT',
@@ -64,11 +67,11 @@ const wait = milliseconds => new Promise(resolve => setTimeout(resolve, millisec
 
 function getRetryDelay(response, attempt) {
   const retryAfter = Number(response?.headers?.get?.('retry-after'));
-  if (Number.isFinite(retryAfter) && retryAfter > 0) return Math.min(retryAfter * 1000, 15_000);
-  return Math.min(750 * (2 ** (attempt - 1)), 5_000);
+  if (Number.isFinite(retryAfter) && retryAfter > 0) return Math.min(retryAfter * 1000, 60_000);
+  return attempt === 1 ? 5_000 : 15_000;
 }
 
-function createProviderError(status, attempts, cause) {
+function createProviderError(status, attempts, cause, retryAfterMs) {
   const quotaExceeded = status === 429;
   const error = new Error(quotaExceeded
     ? 'El análisis inteligente alcanzó temporalmente su límite. Reintentá en unos minutos.'
@@ -78,11 +81,18 @@ function createProviderError(status, attempts, cause) {
   error.code = quotaExceeded ? 'IMAGE_ANALYSIS_RATE_LIMITED' : 'IMAGE_ANALYSIS_UNAVAILABLE';
   error.retryable = true;
   error.attempts = attempts;
+  error.retryAfterSeconds = Math.max(1, Math.ceil((retryAfterMs || (quotaExceeded ? RATE_LIMIT_COOLDOWN_MS : UNAVAILABLE_COOLDOWN_MS)) / 1000));
   if (cause) error.cause = cause;
   return error;
 }
 
 async function requestAnalysis({ url, options, fetchImpl, waitImpl, timeoutMs }) {
+  const now = Date.now();
+  if (analysisUnavailableUntil > now) {
+    const remainingMs = analysisUnavailableUntil - now;
+    throw createProviderError(429, 0, undefined, remainingMs);
+  }
+
   let lastStatus = null;
   let lastError;
 
@@ -93,8 +103,16 @@ async function requestAnalysis({ url, options, fetchImpl, waitImpl, timeoutMs })
       const response = await fetchImpl(url, { ...options, signal: controller.signal });
       lastStatus = response.status || null;
       if (response.ok) return { response, attempts: attempt };
+      if (response.status === 429) {
+        const cooldownMs = Math.max(getRetryDelay(response, attempt), RATE_LIMIT_COOLDOWN_MS);
+        analysisUnavailableUntil = Date.now() + cooldownMs;
+        throw createProviderError(response.status, attempt, undefined, cooldownMs);
+      }
       if (!RETRYABLE_STATUSES.has(response.status) || attempt === MAX_ATTEMPTS) {
-        if (RETRYABLE_STATUSES.has(response.status)) throw createProviderError(response.status, attempt);
+        if (RETRYABLE_STATUSES.has(response.status)) {
+          analysisUnavailableUntil = Date.now() + UNAVAILABLE_COOLDOWN_MS;
+          throw createProviderError(response.status, attempt, undefined, UNAVAILABLE_COOLDOWN_MS);
+        }
         const error = new Error('El servicio de análisis rechazó la solicitud.');
         error.statusCode = response.status === 401 || response.status === 403 ? 503 : 502;
         error.providerStatus = response.status;
@@ -107,8 +125,11 @@ async function requestAnalysis({ url, options, fetchImpl, waitImpl, timeoutMs })
     } catch (error) {
       if (error.code?.startsWith('IMAGE_ANALYSIS_')) throw error;
       lastError = error;
-      if (attempt === MAX_ATTEMPTS) throw createProviderError(lastStatus, attempt, error);
-      await waitImpl(Math.min(750 * (2 ** (attempt - 1)), 5_000));
+      if (attempt === MAX_ATTEMPTS) {
+        analysisUnavailableUntil = Date.now() + UNAVAILABLE_COOLDOWN_MS;
+        throw createProviderError(lastStatus, attempt, error, UNAVAILABLE_COOLDOWN_MS);
+      }
+      await waitImpl(attempt === 1 ? 5_000 : 15_000);
     } finally {
       clearTimeout(timeout);
     }
