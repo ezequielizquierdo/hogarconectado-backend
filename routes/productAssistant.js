@@ -51,6 +51,7 @@ router.post('/duplicates', requireRoles('editor', 'admin'), async (req, res) => 
 });
 
 router.post('/analyze', requireRoles('editor', 'admin'), analysisLimiter, async (req, res) => {
+  const startedAt = Date.now();
   try {
     const categories = await Categoria.find({ activa: true }).select('nombre').sort({ nombre: 1 }).lean();
     const draft = await analyzeProductImage({
@@ -79,11 +80,19 @@ router.post('/analyze', requireRoles('editor', 'admin'), analysisLimiter, async 
     });
   } catch (error) {
     const status = error.statusCode || 500;
+    console.warn('Product image analysis failed', {
+      code: error.code || 'IMAGE_ANALYSIS_UNKNOWN',
+      providerStatus: error.providerStatus || null,
+      attempts: error.attempts || 1,
+      durationMs: Date.now() - startedAt
+    });
     res.status(status).json({
       success: false,
       message: status >= 500 && process.env.NODE_ENV === 'production'
-        ? 'No pudimos analizar la imagen en este momento'
-        : error.message
+        ? 'El servicio de análisis no está disponible temporalmente. Podés reintentar sin volver a elegir la imagen.'
+        : error.message,
+      code: error.code || 'IMAGE_ANALYSIS_FAILED',
+      retryable: Boolean(error.retryable)
     });
   }
 });

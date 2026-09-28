@@ -39,3 +39,55 @@ test('analyzeProductImage envía la imagen y devuelve un borrador', async () => 
     else process.env.GEMINI_API_KEY = previousKey;
   }
 });
+
+test('analyzeProductImage reintenta errores temporales y conserva la imagen', async () => {
+  const previousKey = process.env.GEMINI_API_KEY;
+  process.env.GEMINI_API_KEY = 'test-key';
+  let calls = 0;
+  const waits = [];
+  const fetchImpl = async () => {
+    calls += 1;
+    if (calls < 3) return { ok: false, status: 503, headers: { get: () => null } };
+    return { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify({
+      marca: 'Marca', modelo: 'M2', categoriaSugerida: 'Audio', descripcion: 'Equipo', precioBase: 200,
+      stockCantidad: 1, stockDisponible: true, confianza: 0.9, advertencias: []
+    }) }] } }] }) };
+  };
+  try {
+    const result = await analyzeProductImage({
+      imageData: 'data:image/jpeg;base64,aG9sYQ==',
+      categoryNames: ['Audio'],
+      fetchImpl,
+      waitImpl: async delay => waits.push(delay)
+    });
+    assert.equal(result.modelo, 'M2');
+    assert.equal(calls, 3);
+    assert.deepEqual(waits, [750, 1500]);
+  } finally {
+    if (previousKey === undefined) delete process.env.GEMINI_API_KEY;
+    else process.env.GEMINI_API_KEY = previousKey;
+  }
+});
+
+test('analyzeProductImage informa límite temporal después de tres intentos', async () => {
+  const previousKey = process.env.GEMINI_API_KEY;
+  process.env.GEMINI_API_KEY = 'test-key';
+  let calls = 0;
+  try {
+    await assert.rejects(
+      analyzeProductImage({
+        imageData: 'data:image/jpeg;base64,aG9sYQ==',
+        fetchImpl: async () => {
+          calls += 1;
+          return { ok: false, status: 429, headers: { get: () => null } };
+        },
+        waitImpl: async () => undefined
+      }),
+      error => error.code === 'IMAGE_ANALYSIS_RATE_LIMITED' && error.statusCode === 429 && error.retryable === true
+    );
+    assert.equal(calls, 3);
+  } finally {
+    if (previousKey === undefined) delete process.env.GEMINI_API_KEY;
+    else process.env.GEMINI_API_KEY = previousKey;
+  }
+});

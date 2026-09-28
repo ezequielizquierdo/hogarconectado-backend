@@ -1,4 +1,7 @@
 const DEFAULT_MODEL = 'gemini-3.5-flash-lite';
+const DEFAULT_TIMEOUT_MS = 30_000;
+const MAX_ATTEMPTS = 3;
+const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 
 const PRODUCT_SCHEMA = {
   type: 'OBJECT',
@@ -57,7 +60,70 @@ function sanitizeDraft(raw, categoryNames) {
   };
 }
 
-async function analyzeProductImage({ imageData, categoryNames = [], fetchImpl = fetch }) {
+const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+
+function getRetryDelay(response, attempt) {
+  const retryAfter = Number(response?.headers?.get?.('retry-after'));
+  if (Number.isFinite(retryAfter) && retryAfter > 0) return Math.min(retryAfter * 1000, 15_000);
+  return Math.min(750 * (2 ** (attempt - 1)), 5_000);
+}
+
+function createProviderError(status, attempts, cause) {
+  const quotaExceeded = status === 429;
+  const error = new Error(quotaExceeded
+    ? 'El análisis inteligente alcanzó temporalmente su límite. Reintentá en unos minutos.'
+    : 'El servicio de análisis de imágenes no está disponible temporalmente.');
+  error.statusCode = quotaExceeded ? 429 : 503;
+  error.providerStatus = status || null;
+  error.code = quotaExceeded ? 'IMAGE_ANALYSIS_RATE_LIMITED' : 'IMAGE_ANALYSIS_UNAVAILABLE';
+  error.retryable = true;
+  error.attempts = attempts;
+  if (cause) error.cause = cause;
+  return error;
+}
+
+async function requestAnalysis({ url, options, fetchImpl, waitImpl, timeoutMs }) {
+  let lastStatus = null;
+  let lastError;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetchImpl(url, { ...options, signal: controller.signal });
+      lastStatus = response.status || null;
+      if (response.ok) return { response, attempts: attempt };
+      if (!RETRYABLE_STATUSES.has(response.status) || attempt === MAX_ATTEMPTS) {
+        if (RETRYABLE_STATUSES.has(response.status)) throw createProviderError(response.status, attempt);
+        const error = new Error('El servicio de análisis rechazó la solicitud.');
+        error.statusCode = response.status === 401 || response.status === 403 ? 503 : 502;
+        error.providerStatus = response.status;
+        error.code = 'IMAGE_ANALYSIS_REQUEST_REJECTED';
+        error.retryable = false;
+        error.attempts = attempt;
+        throw error;
+      }
+      await waitImpl(getRetryDelay(response, attempt));
+    } catch (error) {
+      if (error.code?.startsWith('IMAGE_ANALYSIS_')) throw error;
+      lastError = error;
+      if (attempt === MAX_ATTEMPTS) throw createProviderError(lastStatus, attempt, error);
+      await waitImpl(Math.min(750 * (2 ** (attempt - 1)), 5_000));
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  throw createProviderError(lastStatus, MAX_ATTEMPTS, lastError);
+}
+
+async function analyzeProductImage({
+  imageData,
+  categoryNames = [],
+  fetchImpl = fetch,
+  waitImpl = wait,
+  timeoutMs = DEFAULT_TIMEOUT_MS
+}) {
   if (!process.env.GEMINI_API_KEY) {
     throw Object.assign(new Error('El análisis inteligente de imágenes no está configurado'), { statusCode: 503 });
   }
@@ -74,18 +140,20 @@ La descripción debe ser breve, comercial y basada en prestaciones visibles.
 Agregá advertencias para todo dato ambiguo o ausente. Respondé únicamente con el JSON solicitado.`;
 
   const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
-  const response = await fetchImpl(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+  const { response } = await requestAnalysis({
+    url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+    fetchImpl,
+    waitImpl,
+    timeoutMs,
+    options: {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: image.mimeType, data: image.data } }] }],
       generationConfig: { responseMimeType: 'application/json', responseSchema: PRODUCT_SCHEMA, temperature: 0.1 }
     })
+    }
   });
-
-  if (!response.ok) {
-    throw Object.assign(new Error('No pudimos analizar la imagen en este momento'), { statusCode: response.status === 429 ? 429 : 502 });
-  }
 
   const payload = await response.json();
   const text = payload?.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('') || '';
@@ -98,4 +166,4 @@ Agregá advertencias para todo dato ambiguo o ausente. Respondé únicamente con
   }
 }
 
-module.exports = { analyzeProductImage, parseImageData, sanitizeDraft };
+module.exports = { analyzeProductImage, parseImageData, sanitizeDraft, getRetryDelay };
