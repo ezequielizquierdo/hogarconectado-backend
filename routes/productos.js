@@ -7,7 +7,12 @@ const { getPricingConfig } = require('../utils/pricing');
 const Categoria = require('../models/Categoria');
 const { authenticate, optionalAuthenticate, requireRoles } = require('../middleware/auth');
 const { deleteAssets } = require('../services/imageStorage');
-const { serializeAuthenticatedProduct, serializePublicProduct, serializeSellerProduct } = require('../utils/publicProduct');
+const {
+  serializeAdminProduct,
+  serializeAuthenticatedProduct,
+  serializePublicProduct,
+  serializeSellerProduct
+} = require('../utils/publicProduct');
 const { buildProductSearchFilter } = require('../utils/productSearch');
 const { updatedSince, isPriceOrder, sortBySalePrice } = require('../utils/productCatalogFilters');
 
@@ -96,8 +101,10 @@ router.get('/', optionalAuthenticate, async (req, res) => {
 
     res.json({
       success: true,
-      data: req.user && ['admin', 'editor'].includes(req.user.rol)
-        ? productos.map(serializeAuthenticatedProduct)
+      data: req.user?.rol === 'admin'
+        ? productos.map(serializeAdminProduct)
+        : req.user?.rol === 'editor'
+          ? productos.map(serializeAuthenticatedProduct)
         : req.user?.rol === 'vendedor'
           ? productos.map(serializeSellerProduct)
           : productos.map(serializePublicProduct),
@@ -166,8 +173,10 @@ router.get('/:id', optionalAuthenticate, async (req, res) => {
     }
     return res.json({
       success: true,
-      data: ['admin', 'editor'].includes(req.user.rol)
-        ? serializeAuthenticatedProduct(producto)
+      data: req.user.rol === 'admin'
+        ? serializeAdminProduct(producto)
+        : req.user.rol === 'editor'
+          ? serializeAuthenticatedProduct(producto)
         : req.user.rol === 'vendedor'
           ? serializeSellerProduct(producto)
           : serializePublicProduct(producto)

@@ -5,6 +5,8 @@ const DEFAULT_PRICING = Object.freeze({
   factor6Cuotas: 1.2138
 });
 
+const SELLER_MARGIN_SHARE = 0.6;
+
 function parseNonNegativeNumber(value, fallback) {
   const parsed = Number.parseFloat(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
@@ -99,9 +101,28 @@ function calculateDetailedPrices(precioBase, config = DEFAULT_PRICING) {
   };
 }
 
+function calculateMarginDistribution(salePrice, settlementCost, sellerShare = SELLER_MARGIN_SHARE) {
+  const sale = Number(salePrice);
+  const cost = Number(settlementCost);
+  const share = Number(sellerShare);
+  if (![sale, cost, share].every(Number.isFinite) || sale < 0 || cost < 0 || share < 0 || share > 1) {
+    throw new TypeError('Los valores de liquidación deben ser números válidos');
+  }
+
+  const margin = Math.max(0, sale - cost);
+  const sellerCommission = margin * share;
+  return {
+    margin,
+    sellerCommission,
+    platformShare: margin - sellerCommission
+  };
+}
+
 module.exports = {
   DEFAULT_PRICING,
+  SELLER_MARGIN_SHARE,
   calculateDetailedPrices,
+  calculateMarginDistribution,
   calculatePrices,
   getPricingConfig,
   getProductPricingConfig,

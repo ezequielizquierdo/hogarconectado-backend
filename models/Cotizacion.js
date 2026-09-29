@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { calculateMarginDistribution } = require('../utils/pricing');
 
 const preciosSnapshotSchema = new mongoose.Schema({
   contado: Number,
@@ -145,12 +146,13 @@ cotizacionSchema.methods.calcularResumenConfirmacion = function() {
   }, 0);
   const costoEnvio = this.venta?.agregarEnvio ? Number(this.venta.costoEnvio || 0) : 0;
   const totalProductos = this.totales.total;
-  const margenComercial = Math.max(0, totalProductos - costoProductos);
   const porcentajeVendedor = this.tipoLiquidacion === 'vendedor-60-margen'
     ? 0.6
     : this.tipoLiquidacion === 'vendedor-50-margen' ? 0.5 : 1;
-  const gananciaVendedor = margenComercial * porcentajeVendedor;
-  const participacionHogarConectado = margenComercial - gananciaVendedor;
+  const {
+    sellerCommission: gananciaVendedor,
+    platformShare: participacionHogarConectado
+  } = calculateMarginDistribution(totalProductos, costoProductos, porcentajeVendedor);
   const totalVendido = totalProductos + costoEnvio;
   const dineroARendir = totalVendido - gananciaVendedor;
   this.resumenConfirmacion = {

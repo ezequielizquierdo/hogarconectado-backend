@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
+  calculateMarginDistribution,
   calculateDetailedPrices,
   calculatePrices,
   getPricingConfig,
@@ -115,4 +116,12 @@ test('conserva la ganancia global cuando el producto no tiene porcentaje propio'
   });
 
   assert.equal(config.ganancia, 0.30);
+});
+
+test('calcula la comisión del vendedor sobre el margen comercial', () => {
+  assert.deepEqual(calculateMarginDistribution(430000, 371000), {
+    margin: 59000,
+    sellerCommission: 35400,
+    platformShare: 23600
+  });
 });

@@ -1,3 +1,15 @@
+const { calculateMarginDistribution } = require('./pricing');
+
+function getSellerCommission(product, prices) {
+  const source = typeof product?.toObject === 'function'
+    ? product.toObject({ virtuals: true })
+    : product;
+  const basePrice = Number(source?.precioBase);
+  const salePrice = Number(prices?.contado);
+  if (!Number.isFinite(basePrice) || !Number.isFinite(salePrice)) return undefined;
+  return calculateMarginDistribution(salePrice, basePrice).sellerCommission;
+}
+
 function serializePublicProduct(product) {
   const source = typeof product?.toObject === 'function'
     ? product.toObject({ virtuals: true })
@@ -44,7 +56,18 @@ function serializeAuthenticatedProduct(product) {
     ? product.calcularCuotas()
     : source.precios;
 
-  return { ...source, precios: prices };
+  return {
+    ...source,
+    precios: prices
+  };
+}
+
+function serializeAdminProduct(product) {
+  const serialized = serializeAuthenticatedProduct(product);
+  return {
+    ...serialized,
+    comisionVendedor: getSellerCommission(product, serialized.precios)
+  };
 }
 
 function serializeSellerProduct(product) {
@@ -64,4 +87,9 @@ function serializeSellerProduct(product) {
   };
 }
 
-module.exports = { serializeAuthenticatedProduct, serializePublicProduct, serializeSellerProduct };
+module.exports = {
+  serializeAdminProduct,
+  serializeAuthenticatedProduct,
+  serializePublicProduct,
+  serializeSellerProduct
+};

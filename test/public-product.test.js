@@ -1,6 +1,11 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { serializeAuthenticatedProduct, serializePublicProduct, serializeSellerProduct } = require('../utils/publicProduct');
+const {
+  serializeAdminProduct,
+  serializeAuthenticatedProduct,
+  serializePublicProduct,
+  serializeSellerProduct
+} = require('../utils/publicProduct');
 
 test('serializePublicProduct expone solo datos aptos para el catálogo público', () => {
   const result = serializePublicProduct({
@@ -24,6 +29,7 @@ test('serializePublicProduct expone solo datos aptos para el catálogo público'
   assert.equal('precioBase' in result, false);
   assert.equal('precios' in result, false);
   assert.equal('porcentajeGanancia' in result, false);
+  assert.equal('comisionVendedor' in result, false);
   assert.equal('imagenPublicIds' in result, false);
   assert.equal('tags' in result, false);
 });
@@ -41,6 +47,7 @@ test('serializeAuthenticatedProduct agrega los precios completos calculados', ()
 
   assert.deepEqual(result.precios, prices);
   assert.equal(result.marca, 'Marca');
+  assert.equal(result.comisionVendedor, undefined);
 });
 
 test('serializeSellerProduct permite cotizar sin exponer costos ni porcentaje', () => {
@@ -59,10 +66,20 @@ test('serializeSellerProduct permite cotizar sin exponer costos ni porcentaje', 
 
   assert.equal(result.precios.contado, 430000);
   assert.equal(result.precios.factura.unPago, 451500);
+  assert.equal(result.comisionVendedor, undefined);
   assert.equal('costoBase' in result.precios.factura, false);
   assert.equal('precioBase' in result, false);
   assert.equal('porcentajeGanancia' in result, false);
   assert.equal('imagenPublicIds' in result, false);
+});
+
+test('serializeAdminProduct informa la comisión de contado sin duplicar la fórmula', () => {
+  const result = serializeAdminProduct({
+    toObject: () => ({ _id: 'producto-1', precioBase: 371000 }),
+    calcularCuotas: () => ({ contado: 430000 })
+  });
+
+  assert.equal(result.comisionVendedor, 35400);
 });
 
 test('serializePublicProduct identifica una venta por catálogo sin exponer datos internos', () => {
