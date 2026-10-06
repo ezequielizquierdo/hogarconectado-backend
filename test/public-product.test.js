@@ -125,3 +125,18 @@ test('serializePublicProduct muestra una promoción sin exponer su configuració
     precioPromocional: 108000
   });
 });
+
+test('serializePublicProduct calcula el precio de documentos lean usados por el catálogo', () => {
+  const result = serializePublicProduct({
+    _id: 'producto-lean',
+    marca: 'Marca',
+    modelo: 'Modelo',
+    precioBase: 100,
+    porcentajeGanancia: 10,
+    descuento: { activo: false }
+  });
+
+  assert.equal(Math.round(result.precioConGanancia), 110);
+  assert.equal('precioBase' in result, false);
+  assert.equal('porcentajeGanancia' in result, false);
+});

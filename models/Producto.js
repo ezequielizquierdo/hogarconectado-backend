@@ -98,6 +98,8 @@ productoSchema.index({ marca: 1 });
 productoSchema.index({ modelo: 1 });
 productoSchema.index({ activo: 1 });
 productoSchema.index({ 'stock.disponible': 1 });
+productoSchema.index({ activo: 1, createdAt: -1 });
+productoSchema.index({ activo: 1, updatedAt: -1 });
 
 productoSchema.pre('validate', function(next) {
   if (this.tipoComercializacion === 'venta-catalogo' && !this.catalogo?.nombre?.trim()) {

@@ -19,6 +19,11 @@ const { updatedSince, isPriceOrder, sortBySalePrice } = require('../utils/produc
 // GET /api/productos - Obtener todos los productos con filtros y paginación
 router.get('/', optionalAuthenticate, async (req, res) => {
   try {
+    res.vary('Authorization');
+    res.set(
+      'Cache-Control',
+      req.user ? 'private, no-store' : 'public, max-age=60, stale-while-revalidate=300'
+    );
     const {
       categoria,
       marca,
@@ -85,9 +90,9 @@ router.get('/', optionalAuthenticate, async (req, res) => {
     const priceOrder = isPriceOrder(ordenar);
     const [matchedProducts, count] = await Promise.all([
       priceOrder
-        ? Producto.find(filtrosFinales).populate('categoria', 'nombre icono')
+        ? Producto.find(filtrosFinales).populate('categoria', 'nombre icono').lean()
         : Producto.find(filtrosFinales).populate('categoria', 'nombre icono')
-          .sort(sortOptions).skip(skip).limit(limiteParsed),
+          .sort(sortOptions).skip(skip).limit(limiteParsed).lean(),
       priceOrder ? Promise.resolve(null) : Producto.countDocuments(filtrosFinales)
     ]);
     const total = priceOrder ? matchedProducts.length : count;
@@ -131,6 +136,7 @@ router.get('/', optionalAuthenticate, async (req, res) => {
       }
     });
   } catch (error) {
+    res.set('Cache-Control', 'no-store');
     res.status(500).json({
       success: false,
       message: 'Error al obtener productos',

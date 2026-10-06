@@ -1,4 +1,26 @@
-const { calculateMarginDistribution } = require('./pricing');
+const {
+  calculateMarginDistribution,
+  calculatePrices,
+  getProductPricingConfig
+} = require('./pricing');
+
+function resolveProductPrices(product, source) {
+  if (typeof product?.calcularCuotas === 'function') return product.calcularCuotas();
+  if (source?.precios) return source.precios;
+
+  const basePrice = Number(source?.precioBase);
+  if (!Number.isFinite(basePrice) || basePrice < 0) return undefined;
+
+  const now = new Date();
+  const discountIsActive = Boolean(source.descuento?.activo)
+    && (!source.descuento.desde || new Date(source.descuento.desde) <= now)
+    && (!source.descuento.hasta || new Date(source.descuento.hasta) >= now);
+
+  return calculatePrices(basePrice, {
+    ...getProductPricingConfig(source.porcentajeGanancia, process.env),
+    descuentoPorcentaje: discountIsActive ? Number(source.descuento?.porcentaje || 0) : 0
+  });
+}
 
 function getSellerCommission(product, prices) {
   const source = typeof product?.toObject === 'function'
@@ -24,7 +46,7 @@ function serializePublicProduct(product) {
         plazoEntrega: source.catalogo?.plazoEntrega
       }
     : undefined;
-  const prices = typeof product?.calcularCuotas === 'function' ? product.calcularCuotas() : source.precios;
+  const prices = resolveProductPrices(product, source);
   const descuentoActivo = Number(prices?.descuentoPorcentaje || 0) > 0;
 
   return {
@@ -35,7 +57,7 @@ function serializePublicProduct(product) {
     descripcion: source.descripcion,
     imagenes: source.imagenes || [],
     stock: source.stock,
-    precioConGanancia: source.precioConGanancia,
+    precioConGanancia: prices?.contado ?? source.precioConGanancia,
     descuento: descuentoActivo ? {
       activo: true,
       porcentaje: prices.descuentoPorcentaje,
@@ -52,9 +74,7 @@ function serializeAuthenticatedProduct(product) {
   const source = typeof product?.toObject === 'function'
     ? product.toObject({ virtuals: true })
     : product;
-  const prices = typeof product?.calcularCuotas === 'function'
-    ? product.calcularCuotas()
-    : source.precios;
+  const prices = resolveProductPrices(product, source);
 
   return {
     ...source,
@@ -72,9 +92,7 @@ function serializeAdminProduct(product) {
 
 function serializeSellerProduct(product) {
   const source = serializePublicProduct(product);
-  const prices = typeof product?.calcularCuotas === 'function'
-    ? product.calcularCuotas()
-    : product?.precios;
+  const prices = resolveProductPrices(product, product);
   if (!prices) return source;
   return {
     ...source,
