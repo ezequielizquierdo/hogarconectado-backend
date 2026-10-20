@@ -24,6 +24,22 @@ const productoSchema = new mongoose.Schema({
     required: [true, 'El precio base es requerido'],
     min: [0, 'El precio no puede ser negativo']
   },
+  precioGenius: {
+    type: Number,
+    min: [0, 'El precio Genius no puede ser negativo']
+  },
+  moneda: {
+    type: String,
+    trim: true,
+    uppercase: true,
+    maxlength: [10, 'La moneda no puede exceder 10 caracteres'],
+    default: 'ARS'
+  },
+  propietario: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'El propietario no puede exceder 100 caracteres']
+  },
   porcentajeGanancia: {
     type: Number,
     min: [0, 'El porcentaje no puede ser negativo'],
@@ -81,6 +97,22 @@ const productoSchema = new mongoose.Schema({
     cantidad: { type: Number, default: 0 },
     disponible: { type: Boolean, default: true }
   },
+  sincronizacionGenius: {
+    clave: { type: String, trim: true },
+    filaOrigen: Number,
+    fechaPrecio: Date,
+    fechaIngreso: Date,
+    controlStock: Date,
+    stockInformado: Number,
+    reservadoInformado: Number,
+    ingresoInformado: Number,
+    deposito: { type: String, trim: true },
+    iva: Number,
+    observaciones: { type: String, trim: true },
+    presenteEnUltimaPlanilla: { type: Boolean, default: true },
+    ultimaSincronizacion: Date,
+    noEncontradoDesde: Date
+  },
   activo: {
     type: Boolean,
     default: true
@@ -100,6 +132,8 @@ productoSchema.index({ activo: 1 });
 productoSchema.index({ 'stock.disponible': 1 });
 productoSchema.index({ activo: 1, createdAt: -1 });
 productoSchema.index({ activo: 1, updatedAt: -1 });
+productoSchema.index({ 'sincronizacionGenius.clave': 1 }, { sparse: true });
+productoSchema.index({ propietario: 1, 'sincronizacionGenius.presenteEnUltimaPlanilla': 1 });
 
 productoSchema.pre('validate', function(next) {
   if (this.tipoComercializacion === 'venta-catalogo' && !this.catalogo?.nombre?.trim()) {

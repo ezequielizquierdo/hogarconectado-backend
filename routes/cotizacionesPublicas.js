@@ -33,6 +33,7 @@ async function findQuote(token) {
 
 function serializePublicQuote(quote, order) {
   const incluyeProductosCatalogo = quoteHasCatalogProducts(quote);
+  const precioPendiente = quote.requiereConfirmacionPrecio === true;
   return {
     id: quote._id,
     cliente: quote.datosContacto.nombre,
@@ -52,12 +53,13 @@ function serializePublicQuote(quote, order) {
       disponiblePorPedido: item.detalles.tipoComercializacion === 'venta-catalogo',
       cantidad: item.cantidad,
       imagen: item.producto?.imagenes?.[0],
-      precioUnitario: selectedUnitPrice(item, quote.modalidadPago),
-      subtotal: selectedUnitPrice(item, quote.modalidadPago) * item.cantidad
+      precioUnitario: precioPendiente ? null : selectedUnitPrice(item, quote.modalidadPago),
+      subtotal: precioPendiente ? null : selectedUnitPrice(item, quote.modalidadPago) * item.cantidad
     })),
     modalidadPago: quote.modalidadPago,
-    total: quote.totales.total,
-    cuotas: quote.modalidadPago === '3-cuotas'
+    requiereConfirmacionPrecio: precioPendiente,
+    total: precioPendiente ? null : quote.totales.total,
+    cuotas: precioPendiente ? null : quote.modalidadPago === '3-cuotas'
       ? { cantidad: 3, monto: quote.totales.total / 3 }
       : quote.modalidadPago === '6-cuotas'
         ? { cantidad: 6, monto: quote.totales.total / 6 }
@@ -80,6 +82,9 @@ router.get('/:token', limiter, [param('token').custom(isValidPublicQuoteToken)],
     if (!validationResult(req).isEmpty()) return res.status(404).json({ success: false, message: 'Cotización no encontrada' });
     const quote = await findQuote(req.params.token);
     if (!quote) return res.status(404).json({ success: false, message: 'La cotización no existe o el enlace venció' });
+    if (quote.requiereConfirmacionPrecio) {
+      return res.status(409).json({ success: false, message: 'El valor actualizado todavía no fue confirmado' });
+    }
     const order = quote.aceptacionCliente?.pedido
       ? await Pedido.findById(quote.aceptacionCliente.pedido).select('estado reservaVenceAt pagoInformadoAt').lean()
       : null;
@@ -94,6 +99,9 @@ router.post('/:token/informar-pago', limiter, [param('token').custom(isValidPubl
     if (!validationResult(req).isEmpty()) return res.status(404).json({ success: false, message: 'Cotización no encontrada' });
     const quote = await findQuote(req.params.token);
     if (!quote) return res.status(404).json({ success: false, message: 'La cotización no existe o el enlace venció' });
+    if (quote.requiereConfirmacionPrecio) {
+      return res.status(409).json({ success: false, message: 'El valor actualizado todavía no fue confirmado' });
+    }
     const order = quote.aceptacionCliente?.pedido
       ? await Pedido.findById(quote.aceptacionCliente.pedido)
       : null;
@@ -138,6 +146,9 @@ router.post('/:token/aceptar', limiter, [
     if (!validationResult(req).isEmpty()) return res.status(400).json({ success: false, message: 'No pudimos validar la aceptación' });
     const quote = await findQuote(req.params.token);
     if (!quote) return res.status(404).json({ success: false, message: 'La cotización no existe o el enlace venció' });
+    if (quote.requiereConfirmacionPrecio) {
+      return res.status(409).json({ success: false, message: 'El valor actualizado todavía no fue confirmado' });
+    }
     if (quoteHasCatalogProducts(quote) && req.body.aceptaCondicionesCatalogo !== true) {
       return res.status(400).json({
         success: false,

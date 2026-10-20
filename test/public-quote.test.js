@@ -42,6 +42,23 @@ test('el pedido congela el precio unitario de la modalidad cotizada', () => {
   assert.equal(selectedUnitPrice(item, '6-cuotas'), 150);
 });
 
+test('el modelo conserva el indicador de valor pendiente para impedir una aceptación prematura', () => {
+  const Cotizacion = require('../models/Cotizacion');
+  const quote = new Cotizacion({
+    datosContacto: { nombre: 'Cliente', telefono: '1123456789' },
+    modalidadPago: 'facturado',
+    requiereConfirmacionPrecio: true,
+    creadaPor: new (require('mongoose').Types.ObjectId)(),
+    productos: [{
+      producto: new (require('mongoose').Types.ObjectId)(),
+      cantidad: 1,
+      detalles: { marca: 'Marca', modelo: 'Modelo', precios: { contado: 100 } }
+    }]
+  });
+  assert.equal(quote.requiereConfirmacionPrecio, true);
+  assert.equal(quote.calcularTotales().total, 0);
+});
+
 test('el pedido admite diferenciar pago informado de pago confirmado', () => {
   const base = {
     cotizacion: new (require('mongoose').Types.ObjectId)(),

@@ -77,6 +77,7 @@ router.post('/', validators, async (req, res) => {
     const cotizacion = new Cotizacion({
       datosContacto,
       modalidadPago: modalidadPago || 'contado',
+      requiereConfirmacionPrecio: Boolean(modalidadPago && modalidadPago !== 'contado'),
       observaciones,
       creadaPor: req.user._id,
       consultaOrigen: consulta?._id,
@@ -279,6 +280,9 @@ router.post('/:id/enlace-publico', async (req, res) => {
     if (cotizacion.estado === 'cancelada') {
       return res.status(409).json({ success: false, message: 'Esta cotización ya no admite un nuevo enlace de aceptación' });
     }
+    if (cotizacion.requiereConfirmacionPrecio) {
+      return res.status(409).json({ success: false, message: 'Confirmá el valor actualizado antes de generar un enlace de aceptación' });
+    }
     const token = createPublicQuoteToken();
     const accesoPublico = {
       tokenHash: hashPublicQuoteToken(token),
@@ -380,6 +384,12 @@ router.put('/:id/estado', [
     if (!cotizacion) return;
     cotizacion.estado = req.body.estado;
     if (req.body.estado === 'confirmada') {
+      if (cotizacion.requiereConfirmacionPrecio) {
+        return res.status(409).json({
+          success: false,
+          message: 'Confirmá el valor actualizado antes de cerrar la venta'
+        });
+      }
       const incluyeCatalogo = cotizacion.productos.some(item => item.detalles?.tipoComercializacion === 'venta-catalogo');
       if (incluyeCatalogo && req.body.disponibilidadCatalogoConfirmada !== true) {
         return res.status(409).json({
@@ -474,6 +484,17 @@ router.get('/:id/mensaje', async (req, res) => {
     }
     const mensajeBase = cotizacion.generarMensajeWhatsApp();
     const telefono = String(cotizacion.datosContacto?.telefono || '').replace(/\D/g, '');
+    if (cotizacion.requiereConfirmacionPrecio) {
+      const estado = cotizacion.estado === 'pendiente' ? 'enviada' : cotizacion.estado;
+      await Cotizacion.updateOne({ _id: cotizacion._id }, { $set: { estado } });
+      return res.json({ success: true, data: {
+        mensaje: mensajeBase,
+        telefono,
+        enlaceCotizacion: null,
+        urlWhatsApp: `https://wa.me/${telefono}?text=${encodeURIComponent(mensajeBase)}`,
+        advertencia: 'El valor debe confirmarse antes de generar una propuesta aceptable'
+      } });
+    }
     const token = createPublicQuoteToken();
     const accesoPublico = {
       tokenHash: hashPublicQuoteToken(token),

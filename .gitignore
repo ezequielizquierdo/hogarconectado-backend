@@ -24,6 +24,7 @@ debug.log
 temp/
 tmp/
 backups/
+outputs/
 
 # Runtime data
 pids

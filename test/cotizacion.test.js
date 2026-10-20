@@ -173,6 +173,21 @@ test('el mensaje informa cuota y total para modalidades financiadas', () => {
   assert.match(mensaje, /Modalidad: 3 cuotas/);
 });
 
+test('una solicitud con precio variable no muestra importes ni puede liquidarse', () => {
+  const cotizacion = makeQuote('3-cuotas');
+  cotizacion.requiereConfirmacionPrecio = true;
+
+  assert.deepEqual(cotizacion.calcularTotales().toObject(), { subtotal: 0, total: 0 });
+  const mensaje = cotizacion.generarMensajeWhatsApp();
+  assert.match(mensaje, /valor actualizado a confirmar/i);
+  assert.match(mensaje, /modalidad solicitada: 3 cuotas/i);
+  assert.doesNotMatch(mensaje, /\$/);
+  assert.throws(
+    () => cotizacion.calcularResumenConfirmacion(),
+    /valor actualizado debe confirmarse/i
+  );
+});
+
 test('el mensaje avisa cuando incluye productos sujetos a catálogo', () => {
   const cotizacion = makeQuote('contado');
   cotizacion.productos[0].detalles.tipoComercializacion = 'venta-catalogo';

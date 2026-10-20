@@ -32,6 +32,13 @@ function getSellerCommission(product, prices) {
   return calculateMarginDistribution(salePrice, basePrice).sellerCommission;
 }
 
+function serializePublicStock(stock) {
+  const quantity = Number(stock?.cantidad);
+  return {
+    disponible: Boolean(stock?.disponible) && Number.isFinite(quantity) && quantity > 0
+  };
+}
+
 function serializePublicProduct(product) {
   const source = typeof product?.toObject === 'function'
     ? product.toObject({ virtuals: true })
@@ -54,9 +61,10 @@ function serializePublicProduct(product) {
     categoria: source.categoria,
     marca: source.marca,
     modelo: source.modelo,
+    moneda: source.moneda || 'ARS',
     descripcion: source.descripcion,
     imagenes: source.imagenes || [],
-    stock: source.stock,
+    stock: serializePublicStock(source.stock),
     precioConGanancia: prices?.contado ?? source.precioConGanancia,
     descuento: descuentoActivo ? {
       activo: true,

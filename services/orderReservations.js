@@ -22,6 +22,9 @@ function quoteHasCatalogProducts(quote) {
 }
 
 async function acceptQuote({ quote, idempotencyKey }) {
+  if (quote.requiereConfirmacionPrecio) {
+    throw Object.assign(new Error('El valor actualizado todavía no fue confirmado'), { statusCode: 409 });
+  }
   const session = await mongoose.startSession();
   let acceptedOrder;
   try {

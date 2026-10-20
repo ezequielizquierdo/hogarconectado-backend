@@ -1,6 +1,12 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { updatedSince, isPriceOrder, sortBySalePrice } = require('../utils/productCatalogFilters');
+const {
+  updatedSince,
+  isPriceOrder,
+  imagePresenceFilter,
+  stockAvailabilityFilter,
+  sortBySalePrice
+} = require('../utils/productCatalogFilters');
 
 test('filtra productos creados o modificados durante los últimos 1, 7 o 30 días', () => {
   const now = new Date('2026-09-22T12:00:00.000Z');
@@ -22,4 +28,27 @@ test('ordena por precio de venta y no por precio base, antes de paginar', () => 
   assert.deepEqual(sortBySalePrice(products, 'precio-asc').map(item => item._id), ['b', 'c', 'a']);
   assert.deepEqual(sortBySalePrice(products, 'precio-desc').map(item => item._id), ['a', 'c', 'b']);
   assert.deepEqual(products.map(item => item._id), ['a', 'b', 'c']);
+});
+
+test('construye el filtro de presencia de imágenes sin alterar la consulta por defecto', () => {
+  assert.deepEqual(imagePresenceFilter('con-imagen'), { 'imagenes.0': { $exists: true } });
+  assert.deepEqual(imagePresenceFilter('sin-imagen'), { 'imagenes.0': { $exists: false } });
+  assert.deepEqual(imagePresenceFilter('todos'), {});
+  assert.deepEqual(imagePresenceFilter('invalido'), {});
+});
+
+test('filtra disponibilidad usando el indicador y una cantidad positiva', () => {
+  assert.deepEqual(stockAvailabilityFilter('true'), {
+    'stock.disponible': true,
+    'stock.cantidad': { $gt: 0 }
+  });
+  assert.deepEqual(stockAvailabilityFilter(false), {
+    $or: [
+      { 'stock.disponible': { $ne: true } },
+      { 'stock.cantidad': { $lte: 0 } },
+      { 'stock.cantidad': { $exists: false } }
+    ]
+  });
+  assert.equal(stockAvailabilityFilter(undefined), null);
+  assert.equal(stockAvailabilityFilter('todos'), null);
 });

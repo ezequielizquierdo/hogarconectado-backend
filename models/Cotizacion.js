@@ -74,6 +74,7 @@ const cotizacionSchema = new mongoose.Schema({
     enum: ['contado', 'facturado', '3-cuotas', '6-cuotas'],
     default: 'contado'
   },
+  requiereConfirmacionPrecio: { type: Boolean, default: false },
   totales: {
     subtotal: { type: Number, default: 0 },
     total: { type: Number, default: 0 }
@@ -133,6 +134,11 @@ cotizacionSchema.index({ estado: 1, createdAt: -1 });
 cotizacionSchema.index({ 'disponibilidadCatalogo.requerida': 1, 'disponibilidadCatalogo.estado': 1, createdAt: -1 });
 
 cotizacionSchema.methods.calcularTotales = function() {
+  if (this.requiereConfirmacionPrecio) {
+    this.totales.subtotal = 0;
+    this.totales.total = 0;
+    return this.totales;
+  }
   this.totales.subtotal = this.productos.reduce((total, item) => {
     return total + getSelectedUnitPrice(item, this.modalidadPago) * item.cantidad;
   }, 0);
@@ -141,6 +147,9 @@ cotizacionSchema.methods.calcularTotales = function() {
 };
 
 cotizacionSchema.methods.calcularResumenConfirmacion = function() {
+  if (this.requiereConfirmacionPrecio) {
+    throw new Error('El valor actualizado debe confirmarse antes de cerrar la venta');
+  }
   const costoProductos = this.productos.reduce((total, item) => {
     return total + getSettlementUnitCost(item, this.modalidadPago) * item.cantidad;
   }, 0);
@@ -165,6 +174,21 @@ cotizacionSchema.methods.calcularResumenConfirmacion = function() {
 };
 
 cotizacionSchema.methods.generarMensajeWhatsApp = function() {
+  const modalidad = {
+    contado: 'Contado',
+    facturado: 'Facturado en 1 cuota',
+    '3-cuotas': '3 cuotas',
+    '6-cuotas': '6 cuotas'
+  }[this.modalidadPago] || this.modalidadPago;
+  if (this.requiereConfirmacionPrecio) {
+    const productosPendientes = this.productos.map(item => {
+      const marca = item.detalles?.marca || 'Producto';
+      const modelo = item.detalles?.modelo || '';
+      return `• ${marca} ${modelo} x${item.cantidad}`;
+    }).join('\n');
+    return `🏠 *Hogar Conectado*\n\n*Solicitud para ${this.datosContacto?.nombre || 'Cliente'}*\n${productosPendientes}\n\n💬 *Valor actualizado a confirmar*\nModalidad solicitada: ${modalidad}\n\nLos costos de facturación y financiación pueden variar. Te confirmaremos el total y, cuando corresponda, el valor de cada cuota antes de avanzar.\n\n${this.observaciones || ''}`.trim();
+  }
+
   const detalle = this.productos.map(item => {
     const subtotal = getSelectedUnitPrice(item, this.modalidadPago) * item.cantidad;
     const marca = item.detalles?.marca || 'Producto';
@@ -172,12 +196,6 @@ cotizacionSchema.methods.generarMensajeWhatsApp = function() {
     return `• ${marca} ${modelo} x${item.cantidad}: $${subtotal.toLocaleString('es-AR')}`;
   }).join('\n');
 
-  const modalidad = {
-    contado: 'Contado',
-    facturado: 'Facturado en 1 cuota',
-    '3-cuotas': '3 cuotas',
-    '6-cuotas': '6 cuotas'
-  }[this.modalidadPago] || this.modalidadPago;
   const total = Number(this.totales?.total ?? this.calcularTotales().total ?? 0);
   const cuotas = this.modalidadPago === '3-cuotas'
     ? `\n3 cuotas de $${(total / 3).toLocaleString('es-AR')}`

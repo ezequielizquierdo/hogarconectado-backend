@@ -1,5 +1,9 @@
 const PERIOD_DAYS = Object.freeze({ dia: 1, semana: 7, mes: 30 });
 const PRICE_ORDERS = new Set(['precio-asc', 'precio-desc']);
+const IMAGE_FILTERS = Object.freeze({
+  'con-imagen': { 'imagenes.0': { $exists: true } },
+  'sin-imagen': { 'imagenes.0': { $exists: false } }
+});
 
 function updatedSince(period, now = new Date()) {
   const days = PERIOD_DAYS[period];
@@ -8,6 +12,31 @@ function updatedSince(period, now = new Date()) {
 
 function isPriceOrder(order) {
   return PRICE_ORDERS.has(order);
+}
+
+function imagePresenceFilter(value) {
+  return IMAGE_FILTERS[value] || {};
+}
+
+function stockAvailabilityFilter(value) {
+  if (String(value) === 'true') {
+    return {
+      'stock.disponible': true,
+      'stock.cantidad': { $gt: 0 }
+    };
+  }
+
+  if (String(value) === 'false') {
+    return {
+      $or: [
+        { 'stock.disponible': { $ne: true } },
+        { 'stock.cantidad': { $lte: 0 } },
+        { 'stock.cantidad': { $exists: false } }
+      ]
+    };
+  }
+
+  return null;
 }
 
 function sortBySalePrice(products, order) {
@@ -21,4 +50,10 @@ function sortBySalePrice(products, order) {
     }).map(({ product }) => product);
 }
 
-module.exports = { updatedSince, isPriceOrder, sortBySalePrice };
+module.exports = {
+  updatedSince,
+  isPriceOrder,
+  imagePresenceFilter,
+  stockAvailabilityFilter,
+  sortBySalePrice
+};

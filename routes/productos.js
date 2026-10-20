@@ -14,7 +14,13 @@ const {
   serializeSellerProduct
 } = require('../utils/publicProduct');
 const { buildProductSearchFilter } = require('../utils/productSearch');
-const { updatedSince, isPriceOrder, sortBySalePrice } = require('../utils/productCatalogFilters');
+const {
+  updatedSince,
+  isPriceOrder,
+  imagePresenceFilter,
+  stockAvailabilityFilter,
+  sortBySalePrice
+} = require('../utils/productCatalogFilters');
 
 // GET /api/productos - Obtener todos los productos con filtros y paginación
 router.get('/', optionalAuthenticate, async (req, res) => {
@@ -28,11 +34,12 @@ router.get('/', optionalAuthenticate, async (req, res) => {
       categoria,
       marca,
       tipoComercializacion,
-      disponible = 'true',
+      disponible,
       limite = 20, // Límite más conservador para mejor rendimiento
       pagina = 1,
       buscar,
       actualizados,
+      imagenes,
       ordenar = 'recientes' // nuevo parámetro de ordenamiento
     } = req.query;
 
@@ -47,6 +54,9 @@ router.get('/', optionalAuthenticate, async (req, res) => {
     if (marca) filtros.marca = new RegExp(marca, 'i');
     const since = updatedSince(actualizados);
     if (since) filtros.updatedAt = { $gte: since };
+    if (req.user?.rol === 'admin') {
+      Object.assign(filtros, imagePresenceFilter(imagenes));
+    }
     if (tipoComercializacion === 'stock-propio') {
       filtros.$or = [
         { tipoComercializacion: 'stock-propio' },
@@ -56,14 +66,6 @@ router.get('/', optionalAuthenticate, async (req, res) => {
       filtros.tipoComercializacion = tipoComercializacion;
     }
     
-    // Temporalmente removido el filtro de stock para debugging
-    // if (disponible === 'true') {
-    //   filtros.$or = [
-    //     { 'stock.disponible': true },
-    //     { 'stock.disponible': { $exists: false } } // Para productos sin stock definido
-    //   ];
-    // }
-
     // Configurar paginación
     const skip = (paginaParsed - 1) * limiteParsed;
 
@@ -83,7 +85,11 @@ router.get('/', optionalAuthenticate, async (req, res) => {
     }
 
     const searchFilter = buscar ? buildProductSearchFilter(buscar) : null;
-    const filtrosFinales = searchFilter ? { ...filtros, ...searchFilter } : filtros;
+    const availabilityFilter = stockAvailabilityFilter(disponible);
+    const additionalFilters = [searchFilter, availabilityFilter].filter(Boolean);
+    const filtrosFinales = additionalFilters.length
+      ? { $and: [filtros, ...additionalFilters] }
+      : filtros;
 
     // El precio público incluye ganancia y descuentos vigentes. Se calcula con
     // el modelo compartido antes de paginar; ordenar por precioBase sería incorrecto.
@@ -132,6 +138,7 @@ router.get('/', optionalAuthenticate, async (req, res) => {
         disponible,
         buscar,
         actualizados: actualizados || 'todos',
+        imagenes: req.user?.rol === 'admin' ? imagenes || 'todos' : 'todos',
         ordenar
       }
     });

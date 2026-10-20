@@ -13,6 +13,7 @@ test('serializePublicProduct expone solo datos aptos para el catálogo público'
     categoria: { _id: 'categoria-1', nombre: 'Heladeras' },
     marca: 'Electrolux',
     modelo: 'IM7S523L',
+    moneda: 'USD',
     descripcion: 'No frost inverter',
     imagenes: ['https://example.com/producto.jpg'],
     stock: { cantidad: 1, disponible: true },
@@ -26,12 +27,15 @@ test('serializePublicProduct expone solo datos aptos para el catálogo público'
 
   assert.equal(result.precioConGanancia, 1917500);
   assert.equal(result.marca, 'Electrolux');
+  assert.equal(result.moneda, 'USD');
   assert.equal('precioBase' in result, false);
   assert.equal('precios' in result, false);
   assert.equal('porcentajeGanancia' in result, false);
   assert.equal('comisionVendedor' in result, false);
   assert.equal('imagenPublicIds' in result, false);
   assert.equal('tags' in result, false);
+  assert.deepEqual(result.stock, { disponible: true });
+  assert.equal('cantidad' in result.stock, false);
 });
 
 test('serializeAuthenticatedProduct agrega los precios completos calculados', () => {
@@ -54,7 +58,8 @@ test('serializeSellerProduct permite cotizar sin exponer costos ni porcentaje', 
   const result = serializeSellerProduct({
     toObject: () => ({
       _id: 'producto-1', marca: 'Marca', modelo: 'Modelo', precioBase: 371000,
-      porcentajeGanancia: 15, imagenPublicIds: ['interno'], precioConGanancia: 430000
+      porcentajeGanancia: 15, imagenPublicIds: ['interno'], precioConGanancia: 430000,
+      stock: { cantidad: 7, disponible: true }
     }),
     calcularCuotas: () => ({
       contado: 430000,
@@ -71,6 +76,20 @@ test('serializeSellerProduct permite cotizar sin exponer costos ni porcentaje', 
   assert.equal('precioBase' in result, false);
   assert.equal('porcentajeGanancia' in result, false);
   assert.equal('imagenPublicIds' in result, false);
+  assert.deepEqual(result.stock, { disponible: true });
+  assert.equal('cantidad' in result.stock, false);
+});
+
+test('serializePublicProduct considera sin stock una cantidad nula, cero o negativa', () => {
+  for (const cantidad of [undefined, null, 0, -2]) {
+    const result = serializePublicProduct({
+      _id: `producto-${cantidad}`,
+      marca: 'Marca',
+      modelo: 'Modelo',
+      stock: { cantidad, disponible: true }
+    });
+    assert.deepEqual(result.stock, { disponible: false });
+  }
 });
 
 test('serializeAdminProduct informa la comisión de contado sin duplicar la fórmula', () => {
