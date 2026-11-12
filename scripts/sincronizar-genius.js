@@ -172,16 +172,27 @@ async function applyPlan(plan, categories, synchronizedAt, session) {
   return { result, createdCategories: ensuredCategories.created };
 }
 
-async function verifyResult(plan, synchronizedAt) {
-  const [synchronizedProducts, missingProducts] = await Promise.all([
+async function verifyResult(plan, synchronizedAt, session) {
+  const queries = [
     Producto.countDocuments({ 'sincronizacionGenius.ultimaSincronizacion': synchronizedAt, 'sincronizacionGenius.presenteEnUltimaPlanilla': true }),
-    Producto.countDocuments({ 'sincronizacionGenius.ultimaSincronizacion': synchronizedAt, 'sincronizacionGenius.presenteEnUltimaPlanilla': false })
-  ]);
+    Producto.countDocuments({ 'sincronizacionGenius.ultimaSincronizacion': synchronizedAt, 'sincronizacionGenius.presenteEnUltimaPlanilla': false }),
+    Producto.countDocuments({
+      'sincronizacionGenius.ultimaSincronizacion': synchronizedAt,
+      'sincronizacionGenius.presenteEnUltimaPlanilla': true,
+      $expr: { $ne: ['$precioBase', '$precioGenius'] }
+    })
+  ];
+  if (session) queries.forEach(query => query.session(session));
+  const [synchronizedProducts, missingProducts, priceMismatches] = await Promise.all(queries);
   const expectedSynchronized = plan.summary.creates + plan.summary.updates;
-  if (synchronizedProducts !== expectedSynchronized || missingProducts !== plan.summary.missingFromSpreadsheet) {
-    throw new Error(`Verificación fallida: sincronizados ${synchronizedProducts}/${expectedSynchronized}, ausentes ${missingProducts}/${plan.summary.missingFromSpreadsheet}`);
+  if (
+    synchronizedProducts !== expectedSynchronized
+    || missingProducts !== plan.summary.missingFromSpreadsheet
+    || priceMismatches !== 0
+  ) {
+    throw new Error(`Verificación fallida: sincronizados ${synchronizedProducts}/${expectedSynchronized}, ausentes ${missingProducts}/${plan.summary.missingFromSpreadsheet}, precios inconsistentes ${priceMismatches}`);
   }
-  return { synchronizedProducts, missingProducts };
+  return { synchronizedProducts, missingProducts, priceMismatches };
 }
 
 async function run() {
@@ -205,12 +216,14 @@ async function run() {
   const synchronizedAt = new Date();
   const session = await mongoose.startSession();
   let transactionResult;
+  let transactionVerification;
   try {
     await session.withTransaction(async () => {
       const [products, categories] = await readCurrentState(session);
       const plan = buildGeniusSyncPlan(rows, products, categories);
       validateConfirmation(plan, hash);
       transactionResult = await applyPlan(plan, categories, synchronizedAt, session);
+      transactionVerification = await verifyResult(plan, synchronizedAt, session);
     }, {
       readConcern: { level: 'snapshot' },
       writeConcern: { w: 'majority' }
@@ -225,6 +238,7 @@ async function run() {
   console.log(`Categorías creadas: ${transactionResult.createdCategories}`);
   console.log(`Productos creados: ${initialPlan.summary.creates}`);
   console.log(`Productos actualizados: ${initialPlan.summary.updates}`);
+  console.log(`Precios base verificados: ${transactionVerification.synchronizedProducts - transactionVerification.priceMismatches}`);
   console.log(`Productos marcados para revisión: ${verification.missingProducts}`);
   console.log(`Conflictos omitidos: ${initialPlan.summary.conflicts}`);
   console.log(`Filas excluidas: ${initialPlan.summary.excludedByCondition + initialPlan.summary.excludedByCurrency}`);

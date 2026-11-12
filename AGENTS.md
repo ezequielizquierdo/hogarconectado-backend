@@ -56,7 +56,7 @@ No versionar `.env`, credenciales, cadenas de conexión ni secretos.
 - No duplicar cálculos en rutas, modelos, scripts ni frontend.
 - `/api/precios/calcular` expone cálculos con porcentajes dinámicos.
 - Los precios de productos deben obtenerse mediante las funciones compartidas de `utils/pricing.js`.
-- La planilla Genius alimenta MongoDB mediante una sincronización incremental: conserva imágenes y campos comerciales propios, excluye Essen y productos reparados o con embalaje abierto, calcula `precioBase` como `precioGenius + 2%` y separa coincidencias ambiguas para revisión manual.
+- La planilla Genius alimenta MongoDB mediante una sincronización incremental: conserva imágenes y campos comerciales propios, excluye Essen y productos reparados o con embalaje abierto, usa el valor de `PRECIO` tanto para `precioGenius` como para `precioBase` sin recargo adicional y separa coincidencias ambiguas para revisión manual.
 - Los productos de la planilla Genius con una moneda distinta de ARS se excluyen de la sincronización hasta incorporar soporte multimoneda.
 - Los productos Genius ausentes de una planilla se marcan para revisión; nunca se eliminan ni desactivan automáticamente.
 - Las imágenes persistentes se gestionan a través de `services/imageStorage.js` y Cloudinary.

@@ -1,5 +1,4 @@
 const DEFAULT_MARGIN_PERCENTAGE = 10;
-const GENIUS_BASE_SURCHARGE = 0.02;
 const EXCLUDED_CONDITION_PATTERNS = [
   { reason: 'Producto reparado', pattern: /\breparad[oa]s?\b/i },
   { reason: 'Producto sin caja', pattern: /\bsin\s+caja\b/i },
@@ -247,9 +246,7 @@ function normalizeGeniusRow(row, rowNumber) {
     modelo: model,
     descripcion: cleanText(row.DETALLE),
     precioGenius: price.amount,
-    precioBase: Number.isFinite(price.amount)
-      ? Math.round(price.amount * (1 + GENIUS_BASE_SURCHARGE))
-      : null,
+    precioBase: Number.isFinite(price.amount) ? price.amount : null,
     moneda: price.currency,
     porcentajeGanancia: DEFAULT_MARGIN_PERCENTAGE,
     propietario: 'Genius',
@@ -417,7 +414,7 @@ function buildGeniusSyncPlan(rows, existingProducts = [], existingCategories = [
     generatedAt: new Date(),
     rules: {
       sourceSheet: 'NEW QUEBRA',
-      baseSurchargePercentage: GENIUS_BASE_SURCHARGE * 100,
+      baseSurchargePercentage: 0,
       defaultMarginPercentage: DEFAULT_MARGIN_PERCENTAGE,
       absentProducts: 'mark-for-review',
       essenProducts: 'excluded',
@@ -451,7 +448,6 @@ module.exports = {
   CATEGORY_ALIASES,
   DEFAULT_MARGIN_PERCENTAGE,
   EXCLUDED_CONDITION_PATTERNS,
-  GENIUS_BASE_SURCHARGE,
   buildGeniusCreateDocument,
   buildGeniusUpdateSet,
   buildMissingProductUpdate,

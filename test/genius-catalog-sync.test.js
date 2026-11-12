@@ -25,12 +25,22 @@ test('normaliza precio, modelo numérico, categoría y stock Genius', () => {
   assert.equal(result.categoria, 'Bicicletas');
   assert.equal(result.modelo, '12345');
   assert.equal(result.precioGenius, 100000);
-  assert.equal(result.precioBase, 102000);
+  assert.equal(result.precioBase, 100000);
   assert.equal(result.moneda, 'ARS');
   assert.equal(result.porcentajeGanancia, 10);
   assert.equal(result.propietario, 'Genius');
   assert.deepEqual(result.stock, { cantidad: 0, disponible: false });
   assert.equal(result.sincronizacionGenius.stockInformado, -2);
+});
+
+test('usa el precio Genius como precio base sin recargo adicional', () => {
+  const plan = buildGeniusSyncPlan([
+    { PRODUCTO: 'Heladera', MARCA: 'Marca', MODELO: 'BASE', PRECIO: 123456, STOCK: 1 }
+  ]);
+
+  assert.equal(plan.creates[0].precioGenius, 123456);
+  assert.equal(plan.creates[0].precioBase, 123456);
+  assert.equal(plan.rules.baseSurchargePercentage, 0);
 });
 
 test('conserva precios USD y convierte stock positivo a disponibilidad', () => {
@@ -111,7 +121,7 @@ test('construye altas Genius con el precio, stock y margen acordados', () => {
   const document = buildGeniusCreateDocument(source, 'category-id', synchronizedAt);
 
   assert.equal(document.precioGenius, 100000);
-  assert.equal(document.precioBase, 102000);
+  assert.equal(document.precioBase, 100000);
   assert.equal(document.porcentajeGanancia, 10);
   assert.equal(document.propietario, 'Genius');
   assert.deepEqual(document.stock, { cantidad: 2, disponible: true });
@@ -127,7 +137,7 @@ test('una actualización Genius no reemplaza imágenes ni campos comerciales pro
   }, 8);
   const update = buildGeniusUpdateSet(source, 'category-id', synchronizedAt);
 
-  assert.equal(update.precioBase, 204000);
+  assert.equal(update.precioBase, 200000);
   assert.deepEqual(update.stock, { cantidad: 0, disponible: false });
   assert.equal(update['especificaciones.color'], 'Negro');
   assert.equal(Object.hasOwn(update, 'imagenes'), false);

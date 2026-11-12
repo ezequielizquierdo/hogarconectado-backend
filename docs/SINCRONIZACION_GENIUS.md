@@ -9,7 +9,7 @@ La planilla de Genius alimenta el catálogo de Hogar Conectado. MongoDB continú
 - Las coincidencias ambiguas quedan para revisión manual y no se actualizan automáticamente.
 - Los productos reparados, sin caja, con caja o embalaje abierto, u `open box` se excluyen y se informan por separado.
 - Los productos Essen quedan fuera de la comparación.
-- `precioGenius` conserva el precio informado y `precioBase` suma 2%, redondeado al peso más cercano.
+- `precioGenius` y `precioBase` usan exactamente el valor informado en la columna `PRECIO`, sin recargo adicional.
 - Los productos nuevos usan 10% de ganancia y propietario `Genius`.
 - Solo se sincronizan precios en pesos argentinos (`ARS`). Toda fila con otra moneda queda excluida e informada para revisión.
 - Un stock mayor que cero queda disponible. Cero, vacío o negativo queda sin stock. El valor original se conserva en los metadatos de sincronización.
@@ -49,3 +49,5 @@ La actualización:
 - no modifica conflictos, filas inválidas ni productos excluidos;
 - marca los ausentes para revisión sin ocultarlos, desactivarlos ni eliminarlos;
 - se detiene sin escribir si cambia el archivo, la base o cualquiera de los conteos confirmados.
+
+Las cotizaciones ya creadas conservan sus precios históricos. La sincronización solo actualiza el catálogo vigente y los nuevos cálculos que se generen desde esos productos.
