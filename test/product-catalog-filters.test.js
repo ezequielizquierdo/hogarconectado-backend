@@ -17,17 +17,34 @@ test('filtra productos creados o modificados durante los últimos 1, 7 o 30 día
   assert.equal(updatedSince('invalido', now), null);
 });
 
-test('ordena por precio de venta y no por precio base, antes de paginar', () => {
+test('ordena objetos lean por precio de venta y no por precio base, antes de paginar', () => {
   const products = [
-    { _id: 'a', precioBase: 100, precioConGanancia: 180, createdAt: '2026-09-20' },
-    { _id: 'b', precioBase: 120, precioConGanancia: 150, createdAt: '2026-09-19' },
-    { _id: 'c', precioBase: 90, precioConGanancia: 160, createdAt: '2026-09-18' }
+    { _id: 'a', precioBase: 100, porcentajeGanancia: 80, createdAt: '2026-09-20' },
+    { _id: 'b', precioBase: 120, porcentajeGanancia: 25, createdAt: '2026-09-19' },
+    { _id: 'c', precioBase: 100, porcentajeGanancia: 100, descuento: { activo: true, porcentaje: 20 }, createdAt: '2026-09-18' }
   ];
   assert.equal(isPriceOrder('precio-asc'), true);
   assert.equal(isPriceOrder('recientes'), false);
   assert.deepEqual(sortBySalePrice(products, 'precio-asc').map(item => item._id), ['b', 'c', 'a']);
   assert.deepEqual(sortBySalePrice(products, 'precio-desc').map(item => item._id), ['a', 'c', 'b']);
   assert.deepEqual(products.map(item => item._id), ['a', 'b', 'c']);
+});
+
+test('deja al final productos sin precio válido en ambos sentidos', () => {
+  const products = [
+    { _id: 'sin-precio', createdAt: '2026-09-21' },
+    { _id: 'economico', precioBase: 100, porcentajeGanancia: 10, createdAt: '2026-09-19' },
+    { _id: 'caro', precioBase: 200, porcentajeGanancia: 10, createdAt: '2026-09-18' }
+  ];
+
+  assert.deepEqual(
+    sortBySalePrice(products, 'precio-asc').map(item => item._id),
+    ['economico', 'caro', 'sin-precio']
+  );
+  assert.deepEqual(
+    sortBySalePrice(products, 'precio-desc').map(item => item._id),
+    ['caro', 'economico', 'sin-precio']
+  );
 });
 
 test('construye el filtro de presencia de imágenes sin alterar la consulta por defecto', () => {

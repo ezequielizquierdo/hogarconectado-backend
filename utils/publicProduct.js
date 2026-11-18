@@ -1,26 +1,7 @@
 const {
   calculateMarginDistribution,
-  calculatePrices,
-  getProductPricingConfig
+  calculateProductPrices
 } = require('./pricing');
-
-function resolveProductPrices(product, source) {
-  if (typeof product?.calcularCuotas === 'function') return product.calcularCuotas();
-  if (source?.precios) return source.precios;
-
-  const basePrice = Number(source?.precioBase);
-  if (!Number.isFinite(basePrice) || basePrice < 0) return undefined;
-
-  const now = new Date();
-  const discountIsActive = Boolean(source.descuento?.activo)
-    && (!source.descuento.desde || new Date(source.descuento.desde) <= now)
-    && (!source.descuento.hasta || new Date(source.descuento.hasta) >= now);
-
-  return calculatePrices(basePrice, {
-    ...getProductPricingConfig(source.porcentajeGanancia, process.env),
-    descuentoPorcentaje: discountIsActive ? Number(source.descuento?.porcentaje || 0) : 0
-  });
-}
 
 function getSellerCommission(product, prices) {
   const source = typeof product?.toObject === 'function'
@@ -53,7 +34,7 @@ function serializePublicProduct(product) {
         plazoEntrega: source.catalogo?.plazoEntrega
       }
     : undefined;
-  const prices = resolveProductPrices(product, source);
+  const prices = calculateProductPrices(product);
   const descuentoActivo = Number(prices?.descuentoPorcentaje || 0) > 0;
 
   return {
@@ -82,7 +63,7 @@ function serializeAuthenticatedProduct(product) {
   const source = typeof product?.toObject === 'function'
     ? product.toObject({ virtuals: true })
     : product;
-  const prices = resolveProductPrices(product, source);
+  const prices = calculateProductPrices(product);
 
   return {
     ...source,
@@ -100,7 +81,7 @@ function serializeAdminProduct(product) {
 
 function serializeSellerProduct(product) {
   const source = serializePublicProduct(product);
-  const prices = resolveProductPrices(product, product);
+  const prices = calculateProductPrices(product);
   if (!prices) return source;
   return {
     ...source,

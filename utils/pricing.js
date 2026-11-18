@@ -86,6 +86,27 @@ function calculatePrices(precioBase, config = DEFAULT_PRICING) {
   };
 }
 
+function calculateProductPrices(product, { now = new Date(), env = process.env } = {}) {
+  if (typeof product?.calcularCuotas === 'function') return product.calcularCuotas();
+
+  const source = typeof product?.toObject === 'function'
+    ? product.toObject({ virtuals: false })
+    : product;
+  if (source?.precios) return source.precios;
+
+  const basePrice = Number(source?.precioBase);
+  if (!Number.isFinite(basePrice) || basePrice < 0) return undefined;
+
+  const discountIsActive = Boolean(source.descuento?.activo)
+    && (!source.descuento.desde || new Date(source.descuento.desde) <= now)
+    && (!source.descuento.hasta || new Date(source.descuento.hasta) >= now);
+
+  return calculatePrices(basePrice, {
+    ...getProductPricingConfig(source.porcentajeGanancia, env),
+    descuentoPorcentaje: discountIsActive ? Number(source.descuento?.porcentaje || 0) : 0
+  });
+}
+
 function calculateDetailedPrices(precioBase, config = DEFAULT_PRICING) {
   const prices = calculatePrices(precioBase, config);
   const base = Number(precioBase);
@@ -123,6 +144,7 @@ module.exports = {
   SELLER_MARGIN_SHARE,
   calculateDetailedPrices,
   calculateMarginDistribution,
+  calculateProductPrices,
   calculatePrices,
   getPricingConfig,
   getProductPricingConfig,
