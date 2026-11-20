@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const {
   buildGeniusCreateDocument,
   buildGeniusUpdateSet,
+  buildNewArrivalMarker,
   buildMissingProductUpdate,
   buildGeniusSyncPlan,
   canonicalCategory,
@@ -64,6 +65,7 @@ test('excluye de la sincronización los productos cuyo precio no está en ARS', 
 test('usa categorías existentes del criterio de Hogar Conectado', () => {
   assert.equal(canonicalCategory('Televisor'), 'Smart TV');
   assert.equal(canonicalCategory('Parlante'), 'Audio');
+  assert.equal(canonicalCategory('Bateria de Cocina'), 'Baterías de cocina');
   assert.equal(canonicalCategory('Producto Especial'), 'Producto Especial');
 });
 
@@ -125,6 +127,11 @@ test('construye altas Genius con el precio, stock y margen acordados', () => {
   assert.equal(document.porcentajeGanancia, 10);
   assert.equal(document.propietario, 'Genius');
   assert.deepEqual(document.stock, { cantidad: 2, disponible: true });
+  assert.deepEqual(document.nuevoIngreso, {
+    activo: true,
+    tipo: 'alta',
+    detectadoEn: synchronizedAt
+  });
   assert.deepEqual(document.imagenes, []);
   assert.equal(document.sincronizacionGenius.ultimaSincronizacion, synchronizedAt);
 });
@@ -135,7 +142,9 @@ test('una actualización Genius no reemplaza imágenes ni campos comerciales pro
     PRODUCTO: 'Heladera', MARCA: 'Marca', MODELO: 'ACTUAL', PRECIO: 200000,
     STOCK: 0, DETALLE: 'Descripción nueva', COLOR: 'Negro'
   }, 8);
-  const update = buildGeniusUpdateSet(source, 'category-id', synchronizedAt);
+  const update = buildGeniusUpdateSet(source, 'category-id', synchronizedAt, {
+    stock: { cantidad: 4, disponible: true }
+  });
 
   assert.equal(update.precioBase, 200000);
   assert.deepEqual(update.stock, { cantidad: 0, disponible: false });
@@ -144,6 +153,40 @@ test('una actualización Genius no reemplaza imágenes ni campos comerciales pro
   assert.equal(Object.hasOwn(update, 'descuento'), false);
   assert.equal(Object.hasOwn(update, 'porcentajeGanancia'), false);
   assert.equal(Object.hasOwn(update, 'tipoComercializacion'), false);
+  assert.deepEqual(update.nuevoIngreso, { activo: false });
+});
+
+test('señala como nuevo ingreso una reposición y no un producto que ya estaba disponible', () => {
+  const synchronizedAt = new Date('2026-11-20T12:00:00.000Z');
+  const source = { stock: { cantidad: 3, disponible: true } };
+
+  assert.deepEqual(
+    buildNewArrivalMarker(source, { stock: { cantidad: 0, disponible: false } }, synchronizedAt),
+    { activo: true, tipo: 'reposicion', detectadoEn: synchronizedAt }
+  );
+  assert.deepEqual(
+    buildNewArrivalMarker(source, { stock: { cantidad: 1, disponible: true } }, synchronizedAt),
+    { activo: false }
+  );
+  assert.deepEqual(
+    buildNewArrivalMarker({ stock: { cantidad: 0, disponible: false } }, null, synchronizedAt),
+    { activo: false }
+  );
+});
+
+test('resume cuántas altas disponibles y reposiciones recibirán la referencia de nuevo ingreso', () => {
+  const plan = buildGeniusSyncPlan([
+    { PRODUCTO: 'Heladera', MARCA: 'Nueva', MODELO: 'ALTA', PRECIO: 100, STOCK: 2 },
+    { PRODUCTO: 'Heladera', MARCA: 'Vieja', MODELO: 'REPONE', PRECIO: 100, STOCK: 1 },
+    { PRODUCTO: 'Heladera', MARCA: 'Vieja', MODELO: 'CONTINUA', PRECIO: 100, STOCK: 3 }
+  ], [
+    { _id: 'repone', marca: 'Vieja', modelo: 'REPONE', stock: { cantidad: 0, disponible: false } },
+    { _id: 'continua', marca: 'Vieja', modelo: 'CONTINUA', stock: { cantidad: 2, disponible: true } }
+  ]);
+
+  assert.equal(plan.summary.newAvailableProducts, 1);
+  assert.equal(plan.summary.restockedProducts, 1);
+  assert.equal(plan.summary.newArrivalMarkers, 2);
 });
 
 test('marca productos ausentes sin desactivarlos y conserva la primera fecha', () => {

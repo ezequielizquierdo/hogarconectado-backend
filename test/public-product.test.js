@@ -22,6 +22,7 @@ test('serializePublicProduct expone solo datos aptos para el catálogo público'
     precioBase: 1475000,
     porcentajeGanancia: 30,
     imagenPublicIds: ['secreto-interno'],
+    nuevoIngreso: { activo: true, tipo: 'reposicion', detectadoEn: new Date() },
     tags: ['interno']
   });
 
@@ -35,6 +36,8 @@ test('serializePublicProduct expone solo datos aptos para el catálogo público'
   assert.equal('imagenPublicIds' in result, false);
   assert.equal('tags' in result, false);
   assert.deepEqual(result.stock, { disponible: true });
+  assert.deepEqual(result.nuevoIngreso, { activo: true, tipo: 'reposicion' });
+  assert.equal('detectadoEn' in result.nuevoIngreso, false);
   assert.equal('cantidad' in result.stock, false);
 });
 

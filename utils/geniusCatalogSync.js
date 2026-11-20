@@ -19,6 +19,7 @@ const CATEGORY_ALIASES = new Map([
   ['bicibleta', 'Bicicletas'],
   ['bicicleta', 'Bicicletas'],
   ['batidora', 'Licuadoras y Batidoras'],
+  ['bateria de cocina', 'Baterías de cocina'],
   ['licuadora', 'Licuadoras y Batidoras'],
   ['mixer', 'Licuadoras y Batidoras'],
   ['bordeadora', 'Jardinería'],
@@ -311,6 +312,24 @@ function buildSynchronizationMetadata(source, synchronizedAt) {
   };
 }
 
+function hasAvailableStock(stock) {
+  return Boolean(stock?.disponible) && Number(stock?.cantidad) > 0;
+}
+
+function buildNewArrivalMarker(source, current, synchronizedAt) {
+  if (!hasAvailableStock(source?.stock)) return { activo: false };
+
+  if (!current) {
+    return { activo: true, tipo: 'alta', detectadoEn: synchronizedAt };
+  }
+
+  if (!hasAvailableStock(current.stock)) {
+    return { activo: true, tipo: 'reposicion', detectadoEn: synchronizedAt };
+  }
+
+  return { activo: false };
+}
+
 function buildGeniusCreateDocument(source, categoryId, synchronizedAt) {
   return {
     categoria: categoryId,
@@ -325,6 +344,7 @@ function buildGeniusCreateDocument(source, categoryId, synchronizedAt) {
     descripcion: source.descripcion || undefined,
     especificaciones: sourceSpecifications(source),
     stock: source.stock,
+    nuevoIngreso: buildNewArrivalMarker(source, null, synchronizedAt),
     sincronizacionGenius: buildSynchronizationMetadata(source, synchronizedAt),
     imagenes: [],
     imagenPublicIds: [],
@@ -333,7 +353,7 @@ function buildGeniusCreateDocument(source, categoryId, synchronizedAt) {
   };
 }
 
-function buildGeniusUpdateSet(source, categoryId, synchronizedAt) {
+function buildGeniusUpdateSet(source, categoryId, synchronizedAt, current) {
   const update = {
     categoria: categoryId,
     marca: source.marca,
@@ -343,6 +363,7 @@ function buildGeniusUpdateSet(source, categoryId, synchronizedAt) {
     moneda: 'ARS',
     propietario: 'Genius',
     stock: source.stock,
+    nuevoIngreso: buildNewArrivalMarker(source, current, synchronizedAt),
     sincronizacionGenius: buildSynchronizationMetadata(source, synchronizedAt),
     activo: true
   };
@@ -409,6 +430,10 @@ function buildGeniusSyncPlan(rows, existingProducts = [], existingCategories = [
   const categoriesToCreate = [...new Set(validRows.map(row => row.categoria))]
     .filter(name => !categoryNames.has(normalizeText(name)))
     .sort((left, right) => left.localeCompare(right, 'es'));
+  const availableCreates = creates.filter(source => hasAvailableStock(source.stock));
+  const restockedProducts = updates.filter(({ source, current }) => (
+    hasAvailableStock(source.stock) && !hasAvailableStock(current.stock)
+  ));
 
   return {
     generatedAt: new Date(),
@@ -432,7 +457,10 @@ function buildGeniusSyncPlan(rows, existingProducts = [], existingCategories = [
       conflicts: conflicts.length,
       categoriesToCreate: categoriesToCreate.length,
       missingFromSpreadsheet: missingFromSpreadsheet.length,
-      essenExcluded: existingProducts.length - eligibleExisting.length
+      essenExcluded: existingProducts.length - eligibleExisting.length,
+      newAvailableProducts: availableCreates.length,
+      restockedProducts: restockedProducts.length,
+      newArrivalMarkers: availableCreates.length + restockedProducts.length
     },
     creates,
     updates,
@@ -450,6 +478,7 @@ module.exports = {
   EXCLUDED_CONDITION_PATTERNS,
   buildGeniusCreateDocument,
   buildGeniusUpdateSet,
+  buildNewArrivalMarker,
   buildMissingProductUpdate,
   buildGeniusSyncPlan,
   canonicalCategory,

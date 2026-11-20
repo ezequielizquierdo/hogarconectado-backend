@@ -40,6 +40,12 @@ function stockAvailabilityFilter(value) {
   return null;
 }
 
+function newArrivalFilter(value) {
+  return String(value) === 'true'
+    ? { 'nuevoIngreso.activo': true }
+    : null;
+}
+
 function sortBySalePrice(products, order) {
   const direction = order === 'precio-desc' ? -1 : 1;
   return products.map(product => {
@@ -73,6 +79,7 @@ module.exports = {
   updatedSince,
   isPriceOrder,
   imagePresenceFilter,
+  newArrivalFilter,
   stockAvailabilityFilter,
   sortBySalePrice
 };

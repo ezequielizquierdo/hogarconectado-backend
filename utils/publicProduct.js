@@ -36,6 +36,12 @@ function serializePublicProduct(product) {
     : undefined;
   const prices = calculateProductPrices(product);
   const descuentoActivo = Number(prices?.descuentoPorcentaje || 0) > 0;
+  const nuevoIngreso = source.nuevoIngreso?.activo
+    ? {
+        activo: true,
+        tipo: source.nuevoIngreso.tipo === 'reposicion' ? 'reposicion' : 'alta'
+      }
+    : undefined;
 
   return {
     _id: source._id,
@@ -46,6 +52,7 @@ function serializePublicProduct(product) {
     descripcion: source.descripcion,
     imagenes: source.imagenes || [],
     stock: serializePublicStock(source.stock),
+    nuevoIngreso,
     precioConGanancia: prices?.contado ?? source.precioConGanancia,
     descuento: descuentoActivo ? {
       activo: true,

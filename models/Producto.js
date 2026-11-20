@@ -97,6 +97,14 @@ const productoSchema = new mongoose.Schema({
     cantidad: { type: Number, default: 0 },
     disponible: { type: Boolean, default: true }
   },
+  nuevoIngreso: {
+    activo: { type: Boolean, default: false },
+    tipo: {
+      type: String,
+      enum: ['alta', 'reposicion']
+    },
+    detectadoEn: Date
+  },
   sincronizacionGenius: {
     clave: { type: String, trim: true },
     filaOrigen: Number,
@@ -130,6 +138,7 @@ productoSchema.index({ marca: 1 });
 productoSchema.index({ modelo: 1 });
 productoSchema.index({ activo: 1 });
 productoSchema.index({ 'stock.disponible': 1 });
+productoSchema.index({ activo: 1, 'nuevoIngreso.activo': 1 });
 productoSchema.index({ activo: 1, createdAt: -1 });
 productoSchema.index({ activo: 1, updatedAt: -1 });
 productoSchema.index({ 'sincronizacionGenius.clave': 1 }, { sparse: true });

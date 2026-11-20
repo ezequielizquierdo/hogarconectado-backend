@@ -73,7 +73,7 @@ function validateConfirmation(plan, hash) {
 
 async function readCurrentState(session) {
   const productQuery = Producto.find({})
-    .select('_id categoria marca modelo precioBase precioGenius moneda propietario porcentajeGanancia descuento stock imagenes imagenPublicIds tipoComercializacion catalogo especificaciones activo tags sincronizacionGenius createdAt updatedAt')
+    .select('_id categoria marca modelo precioBase precioGenius moneda propietario porcentajeGanancia descuento stock nuevoIngreso imagenes imagenPublicIds tipoComercializacion catalogo especificaciones activo tags sincronizacionGenius createdAt updatedAt')
     .populate('categoria', 'nombre')
     .lean();
   const categoryQuery = Categoria.find({}).select('_id nombre descripcion activa icono createdAt updatedAt').lean();
@@ -133,6 +133,15 @@ async function applyPlan(plan, categories, synchronizedAt, session) {
   const ensuredCategories = await ensureCategories(plan, categories, session);
   const operations = [];
 
+  await Producto.updateMany(
+    { 'nuevoIngreso.activo': true },
+    {
+      $set: { 'nuevoIngreso.activo': false },
+      $unset: { 'nuevoIngreso.tipo': '', 'nuevoIngreso.detectadoEn': '' }
+    },
+    { session }
+  );
+
   for (const source of plan.creates) {
     const category = ensuredCategories.map.get(normalizeText(source.categoria));
     if (!category) throw new Error(`No se resolvió la categoría ${source.categoria}`);
@@ -145,7 +154,7 @@ async function applyPlan(plan, categories, synchronizedAt, session) {
     operations.push({
       updateOne: {
         filter: { _id: item.current._id },
-        update: { $set: buildGeniusUpdateSet(item.source, category._id, synchronizedAt) }
+        update: { $set: buildGeniusUpdateSet(item.source, category._id, synchronizedAt, item.current) }
       }
     });
   }
@@ -238,6 +247,7 @@ async function run() {
   console.log(`Categorías creadas: ${transactionResult.createdCategories}`);
   console.log(`Productos creados: ${initialPlan.summary.creates}`);
   console.log(`Productos actualizados: ${initialPlan.summary.updates}`);
+  console.log(`Nuevos ingresos señalados: ${initialPlan.summary.newArrivalMarkers} (${initialPlan.summary.newAvailableProducts} altas y ${initialPlan.summary.restockedProducts} reposiciones)`);
   console.log(`Precios base verificados: ${transactionVerification.synchronizedProducts - transactionVerification.priceMismatches}`);
   console.log(`Productos marcados para revisión: ${verification.missingProducts}`);
   console.log(`Conflictos omitidos: ${initialPlan.summary.conflicts}`);

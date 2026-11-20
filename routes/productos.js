@@ -18,6 +18,7 @@ const {
   updatedSince,
   isPriceOrder,
   imagePresenceFilter,
+  newArrivalFilter,
   stockAvailabilityFilter,
   sortBySalePrice
 } = require('../utils/productCatalogFilters');
@@ -40,6 +41,7 @@ router.get('/', optionalAuthenticate, async (req, res) => {
       buscar,
       actualizados,
       imagenes,
+      nuevos,
       ordenar = 'recientes' // nuevo parámetro de ordenamiento
     } = req.query;
 
@@ -86,7 +88,8 @@ router.get('/', optionalAuthenticate, async (req, res) => {
 
     const searchFilter = buscar ? buildProductSearchFilter(buscar) : null;
     const availabilityFilter = stockAvailabilityFilter(disponible);
-    const additionalFilters = [searchFilter, availabilityFilter].filter(Boolean);
+    const noveltyFilter = newArrivalFilter(nuevos);
+    const additionalFilters = [searchFilter, availabilityFilter, noveltyFilter].filter(Boolean);
     const filtrosFinales = additionalFilters.length
       ? { $and: [filtros, ...additionalFilters] }
       : filtros;
@@ -139,6 +142,7 @@ router.get('/', optionalAuthenticate, async (req, res) => {
         buscar,
         actualizados: actualizados || 'todos',
         imagenes: req.user?.rol === 'admin' ? imagenes || 'todos' : 'todos',
+        nuevos: String(nuevos) === 'true',
         ordenar
       }
     });

@@ -4,6 +4,7 @@ const {
   updatedSince,
   isPriceOrder,
   imagePresenceFilter,
+  newArrivalFilter,
   stockAvailabilityFilter,
   sortBySalePrice
 } = require('../utils/productCatalogFilters');
@@ -68,4 +69,11 @@ test('filtra disponibilidad usando el indicador y una cantidad positiva', () => 
   });
   assert.equal(stockAvailabilityFilter(undefined), null);
   assert.equal(stockAvailabilityFilter('todos'), null);
+});
+
+test('filtra únicamente los ingresos señalados por la última sincronización', () => {
+  assert.deepEqual(newArrivalFilter(true), { 'nuevoIngreso.activo': true });
+  assert.deepEqual(newArrivalFilter('true'), { 'nuevoIngreso.activo': true });
+  assert.equal(newArrivalFilter(false), null);
+  assert.equal(newArrivalFilter(undefined), null);
 });
