@@ -1,0 +1,18 @@
+{
+  "name": "imagenes-nuevos-ingresos-2026-11-20",
+  "database": "hogarconectado",
+  "collection": "productos",
+  "excludedDamagedProducts": [
+    { "id": "6aec9202bc0027abd9d1f604", "marca": "Alpaca", "modelo": "ALP M 18", "reason": "CAJA ROTA" },
+    { "id": "6ad65cad2a377ff8d4b3dd74", "marca": "Samsung", "modelo": "QN65Q7FAAGCZB", "reason": "PANTALLA ROTA" },
+    { "id": "6ad65cad2a377ff8d4b3dd02", "marca": "Midea", "modelo": "EK-DC17XAR1", "reason": "PEQUEÑO GOLPE" },
+    { "id": "6ad65cad2a377ff8d4b3dcae", "marca": "Samsung", "modelo": "MG30T5019CW/BG", "reason": "GOLPE" },
+    { "id": "6ad65cad2a377ff8d4b3dc53", "marca": "Fornax", "modelo": "12 moldes", "reason": "PERILLA ROTA" },
+    { "id": "6ad65cad2a377ff8d4b3dc46", "marca": "Morelli", "modelo": "FIATO", "reason": "EMBALAJE ROTO" },
+    { "id": "6ad65cad2a377ff8d4b3dc3a", "marca": "Electrolux", "modelo": "OE8GH", "reason": "DETALLE ATRÁS SIN EMBALAJE" },
+    { "id": "6ad65cad2a377ff8d4b3dc31", "marca": "Domec", "modelo": "HRTS18 REFLEX 62214", "reason": "EMBALAJE ROTO" },
+    { "id": "6ad65cad2a377ff8d4b3db28", "marca": "TST", "modelo": "LACAR", "reason": "DETALLES ESTÉTICOS" },
+    { "id": "6ad65cad2a377ff8d4b3db0d", "marca": "Yelmo", "modelo": "CE-5119", "reason": "PORTA FILTRO PARTIDO" },
+    { "id": "6ad65cad2a377ff8d4b3daf2", "marca": "De'Longhi", "modelo": "DL-EC685BK", "reason": "EXHIBICIÓN" }
+  ]
+}
